@@ -18,24 +18,6 @@ namespace UnityEngine
 {
     public static class ExtendedULogger
     {
-        #region Config
-
-        public static LoggerConfig SetUnityFormatter(this LoggerConfig config, Formatter formatter)
-        {
-            config.UnityFormatter = formatter;
-            return config;
-        }
-
-        internal static LoggerConfig AddFileTarget(this LoggerConfig config, Formatter formatter)
-        {
-            const long logSizeLimit = 10 * 1024 * 1024; // 10 MB
-            var logPath = $"{Application.persistentDataPath}/Logs/{Application.identifier}_{DateTime.Now:yyyyMMdd-HHmmss}.log";
-            var fileTarget = new FileTarget(config, formatter, logPath, logSizeLimit, TimeSpan.FromDays(14), autoFlush: false);
-            return config.AddTarget(fileTarget);
-        }
-
-        #endregion
-
         #region Log
 
 #if !ULOGGER_LOGS_ON
