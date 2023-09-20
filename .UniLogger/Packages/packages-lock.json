@@ -7,11 +7,11 @@
       "dependencies": {}
     },
     "com.dbrizov.naughtyattributes": {
-      "version": "https://github.com/dbrizov/NaughtyAttributes.git#upm",
+      "version": "2.1.4",
       "depth": 0,
-      "source": "git",
+      "source": "registry",
       "dependencies": {},
-      "hash": "8a8fa5a9659a6d63f196391c71e06c4286c8acd7"
+      "url": "https://package.openupm.com"
     },
     "com.unity.2d.sprite": {
       "version": "1.0.0",
@@ -52,7 +52,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.test-framework": {
-      "version": "1.1.31",
+      "version": "1.1.33",
       "depth": 0,
       "source": "registry",
       "dependencies": {
