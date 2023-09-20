@@ -1,7 +1,11 @@
-﻿#define ULOGGER_LOGS_ON
+﻿#define ULOGGER_TRACE_ON
+#define ULOGGER_LOGS_ON
 #define ULOGGER_WARNINGS_ON
 #define ULOGGER_ERRORS_ON
 
+#if ULOGGER_TRACE_OFF || ULOGGER_DISABLE_ALL_LOGS
+#undef ULOGGER_TRACE_ON
+#endif
 #if ULOGGER_LOGS_OFF || ULOGGER_DISABLE_ALL_LOGS
 #undef ULOGGER_LOGS_ON
 #endif
@@ -18,6 +22,74 @@ namespace UnityEngine
 {
     public static class ExtendedULogger
     {
+        #region Trace
+
+#if !ULOGGER_TRACE_ON
+        [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
+#endif
+        public static void Trace(this ULogger logger, string message)
+        {
+            logger.Trace(message, default, null, 1);
+        }
+
+#if !ULOGGER_TRACE_ON
+        [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
+#endif
+        public static void Trace(this ULogger logger, string message, Color color)
+        {
+            logger.Trace(message, color, null, 1);
+        }
+
+#if !ULOGGER_TRACE_ON
+        [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
+#endif
+        public static void Trace(this ULogger logger, string message, Object context)
+        {
+            logger.Trace(message, default, context, 1);
+        }
+
+#if !ULOGGER_TRACE_ON
+        [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
+#endif
+        public static void Trace(this ULogger logger, string message, int lvl)
+        {
+            logger.Trace(message, default, null, lvl);
+        }
+
+#if !ULOGGER_TRACE_ON
+        [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
+#endif
+        public static void Trace(this ULogger logger, string message, Color color, Object context)
+        {
+            logger.Trace(message, color, context, 1);
+        }
+
+#if !ULOGGER_TRACE_ON
+        [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
+#endif
+        public static void Trace(this ULogger logger, string message, Color color, int lvl)
+        {
+            logger.Trace(message, color, null, lvl);
+        }
+
+#if !ULOGGER_TRACE_ON
+        [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
+#endif
+        public static void Trace(this ULogger logger, string message, Object context, int lvl)
+        {
+            logger.Trace(message, default, context, lvl);
+        }
+
+#if !ULOGGER_TRACE_ON
+        [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
+#endif
+        public static void Trace(this ULogger logger, string message, Color color, Object context, int lvl)
+        {
+            logger.SendLogToUnity(LogType.Log, message, color, context, lvl);
+        }
+
+        #endregion
+
         #region Log
 
 #if !ULOGGER_LOGS_ON

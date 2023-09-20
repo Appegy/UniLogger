@@ -11,6 +11,7 @@ namespace Appegy.UniLogger.Example
 
         private void CallLogsInMethod()
         {
+            ULogger.Trace("Unsorted trace (ULogger)", this);
             ULogger.Log("Unsorted log (ULogger)", this);
             ULogger.LogWarning("Unsorted warning (ULogger)", this);
             ULogger.LogError("Unsorted error (ULogger)", this);
