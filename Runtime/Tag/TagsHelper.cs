@@ -17,7 +17,7 @@ namespace UnityEngine
         {
             return tag switch
             {
-                null => string.Empty,
+                null => "NULL",
                 string stringTag => stringTag,
                 Type typeTag => typeTag.GetTag(),
                 Enum enumTag => enumTag.GetTag(),
@@ -29,7 +29,7 @@ namespace UnityEngine
         {
             if (!_tagEnumsCache.TryGetValue(value, out var name))
             {
-                var attributes = (LoggerTagNameAttribute[])value.GetType().GetField(value.ToString()).GetCustomAttributes(typeof(LoggerTagNameAttribute), false);
+                var attributes = (TagNameAttribute[])value.GetType().GetField(value.ToString()).GetCustomAttributes(typeof(TagNameAttribute), false);
                 name = attributes.Length > 0 ? attributes[0].Name : value.ToString();
                 _tagEnumsCache[value] = name;
             }
@@ -40,8 +40,8 @@ namespace UnityEngine
         {
             if (!_tagTypesCache.TryGetValue(value, out var name))
             {
-                var attributes = (LoggerTagNameAttribute[])value.GetCustomAttributes(typeof(LoggerTagNameAttribute), false);
-                name = attributes.Length > 0 ? attributes[0].Name : value.ToString();
+                var attributes = (TagNameAttribute[])value.GetCustomAttributes(typeof(TagNameAttribute), false);
+                name = attributes.Length > 0 ? attributes[0].Name : value.Name;
                 _tagTypesCache[value] = name;
             }
             return name;
