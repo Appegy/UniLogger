@@ -7,26 +7,8 @@ namespace UnityEngine
 {
     public class Formatter
     {
-        private static readonly string[] _levelColors =
-        {
-            "<color=red>", //error
-            "<color=#FF5349FF>", //assert (orange red)
-            "<color=orange>", //warning
-            "<color=white>", //log
-            "<color=magenta>" //exception
-        };
-
-        private static readonly string[] _levelTypes =
-        {
-            "ER",
-            "AS",
-            "WN",
-            "LG",
-            "EX"
-        };
 
         private static readonly Dictionary<Tag, Color> _coloredCategories = new Dictionary<Tag, Color>();
-        private static readonly Dictionary<LogType, StackTraceLogType> _stackTraceLogType = new Dictionary<LogType, StackTraceLogType>();
 
         private readonly bool _richText;
         private readonly bool _showTime;
@@ -43,21 +25,6 @@ namespace UnityEngine
             _showTagCategory = options.HasFlag(FormatOptions.TagCategory);
             _showTagName = options.HasFlag(FormatOptions.TagName);
             _showType = options.HasFlag(FormatOptions.LogType);
-            foreach (var logType in Enum.GetValues(typeof(LogType)).OfType<LogType>())
-            {
-                SetStackTraceLogType(logType, Application.GetStackTraceLogType(logType));
-            }
-        }
-
-        public Formatter SetStackTraceLogType(LogType logType, StackTraceLogType traceLogType)
-        {
-            _stackTraceLogType[logType] = traceLogType;
-            return this;
-        }
-
-        public StackTraceLogType GetStackTraceLogType(LogType logType)
-        {
-            return _stackTraceLogType.TryGetValue(logType, out var traceLogType) ? traceLogType : StackTraceLogType.None;
         }
 
         public string Format(LogEntry line)
@@ -85,14 +52,15 @@ namespace UnityEngine
             if (!_showTime) return;
             if (_richText)
             {
-                builder.Append("<i><color=yellow>");
+                builder.Append("[<i><color=yellow>");
                 builder.Append(line.LogTime.ToString("HH:mm:ss:fff"));
-                builder.Append("</color></i>|");
+                builder.Append("</color></i>]");
             }
             else
             {
+                builder.Append("[");
                 builder.Append(line.LogTime.ToString("HH:mm:ss:fff"));
-                builder.Append("|");
+                builder.Append("]");
             }
         }
 
@@ -101,28 +69,26 @@ namespace UnityEngine
             if (!_showType) return;
             if (_richText)
             {
-                builder.Append("<b>");
-                builder.Append(_levelColors[(int)line.LogType]);
-                builder.Append(_levelTypes[(int)line.LogType]);
-                builder.Append("(");
-                builder.Append(line.Level);
-                builder.Append(")");
-                builder.Append("</color></b>|");
+                builder.Append("[<b><color=");
+                builder.Append(line.LogLevel.ToMessageColor());
+                builder.Append(">");
+                builder.Append(line.LogLevel.ToShortString());
+                builder.Append("</color></b>]");
             }
             else
             {
-                builder.Append(_levelTypes[(int)line.LogType]);
-                builder.Append("(");
-                builder.Append(line.Level);
-                builder.Append(")|");
+                builder.Append("[");
+                builder.Append(line.LogLevel.ToShortString());
+                builder.Append("]");
             }
         }
 
         private void AppendThread(LogEntry line, StringBuilder builder)
         {
             if (!_showThread) return;
+            builder.Append("[TH=");
             builder.Append(line.ThreadId);
-            builder.Append("|");
+            builder.Append("]");
         }
 
         private void AppendTag(LogEntry line, StringBuilder builder)

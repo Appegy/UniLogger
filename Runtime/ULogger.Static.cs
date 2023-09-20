@@ -160,46 +160,10 @@ namespace UnityEngine
 #if !ULOGGER_TRACE_ON
         [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
 #endif
-        public static void Trace<TLoggerTag>(TLoggerTag enumValue, string message, int lvl)
-            where TLoggerTag : struct, Enum
-        {
-            GetLogger(enumValue).Trace(message, lvl);
-        }
-
-#if !ULOGGER_TRACE_ON
-        [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
-#endif
         public static void Trace<TLoggerTag>(TLoggerTag enumValue, string message, Color color, Object context)
             where TLoggerTag : struct, Enum
         {
             GetLogger(enumValue).Trace(message, color, context);
-        }
-
-#if !ULOGGER_TRACE_ON
-        [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
-#endif
-        public static void Trace<TLoggerTag>(TLoggerTag enumValue, string message, Color color, int lvl)
-            where TLoggerTag : struct, Enum
-        {
-            GetLogger(enumValue).Trace(message, color, lvl);
-        }
-
-#if !ULOGGER_TRACE_ON
-        [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
-#endif
-        public static void Trace<TLoggerTag>(TLoggerTag enumValue, string message, Object context, int lvl)
-            where TLoggerTag : struct, Enum
-        {
-            GetLogger(enumValue).Trace(message, context, lvl);
-        }
-
-#if !ULOGGER_TRACE_ON
-        [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
-#endif
-        public static void Trace<TLoggerTag>(TLoggerTag enumValue, string message, Color color, Object context, int lvl)
-            where TLoggerTag : struct, Enum
-        {
-            GetLogger(enumValue).Trace(message, color, context, lvl);
         }
 
 #if !ULOGGER_TRACE_ON
@@ -229,41 +193,9 @@ namespace UnityEngine
 #if !ULOGGER_TRACE_ON
         [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
 #endif
-        public static void Trace(string message, int lvl)
-        {
-            _unsortedLogger.Trace(message, lvl);
-        }
-
-#if !ULOGGER_TRACE_ON
-        [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
-#endif
         public static void Trace(string message, Color color, Object context)
         {
             _unsortedLogger.Trace(message, color, context);
-        }
-
-#if !ULOGGER_TRACE_ON
-        [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
-#endif
-        public static void Trace(string message, Color color, int lvl)
-        {
-            _unsortedLogger.Trace(message, color, lvl);
-        }
-
-#if !ULOGGER_TRACE_ON
-        [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
-#endif
-        public static void Trace(string message, Object context, int lvl)
-        {
-            _unsortedLogger.Trace(message, context, lvl);
-        }
-
-#if !ULOGGER_TRACE_ON
-        [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
-#endif
-        public static void Trace(string message, Color color, Object context, int lvl)
-        {
-            _unsortedLogger.Trace(message, color, context, lvl);
         }
 
         #endregion
@@ -300,46 +232,10 @@ namespace UnityEngine
 #if !ULOGGER_LOGS_ON
         [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
 #endif
-        public static void Log<TLoggerTag>(TLoggerTag enumValue, string message, int lvl)
-            where TLoggerTag : struct, Enum
-        {
-            GetLogger(enumValue).Log(message, lvl);
-        }
-
-#if !ULOGGER_LOGS_ON
-        [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
-#endif
         public static void Log<TLoggerTag>(TLoggerTag enumValue, string message, Color color, Object context)
             where TLoggerTag : struct, Enum
         {
             GetLogger(enumValue).Log(message, color, context);
-        }
-
-#if !ULOGGER_LOGS_ON
-        [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
-#endif
-        public static void Log<TLoggerTag>(TLoggerTag enumValue, string message, Color color, int lvl)
-            where TLoggerTag : struct, Enum
-        {
-            GetLogger(enumValue).Log(message, color, lvl);
-        }
-
-#if !ULOGGER_LOGS_ON
-        [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
-#endif
-        public static void Log<TLoggerTag>(TLoggerTag enumValue, string message, Object context, int lvl)
-            where TLoggerTag : struct, Enum
-        {
-            GetLogger(enumValue).Log(message, context, lvl);
-        }
-
-#if !ULOGGER_LOGS_ON
-        [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
-#endif
-        public static void Log<TLoggerTag>(TLoggerTag enumValue, string message, Color color, Object context, int lvl)
-            where TLoggerTag : struct, Enum
-        {
-            GetLogger(enumValue).Log(message, color, context, lvl);
         }
 
 #if !ULOGGER_LOGS_ON
@@ -369,41 +265,9 @@ namespace UnityEngine
 #if !ULOGGER_LOGS_ON
         [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
 #endif
-        public static void Log(string message, int lvl)
-        {
-            _unsortedLogger.Log(message, lvl);
-        }
-
-#if !ULOGGER_LOGS_ON
-        [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
-#endif
         public static void Log(string message, Color color, Object context)
         {
             _unsortedLogger.Log(message, color, context);
-        }
-
-#if !ULOGGER_LOGS_ON
-        [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
-#endif
-        public static void Log(string message, Color color, int lvl)
-        {
-            _unsortedLogger.Log(message, color, lvl);
-        }
-
-#if !ULOGGER_LOGS_ON
-        [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
-#endif
-        public static void Log(string message, Object context, int lvl)
-        {
-            _unsortedLogger.Log(message, context, lvl);
-        }
-
-#if !ULOGGER_LOGS_ON
-        [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
-#endif
-        public static void Log(string message, Color color, Object context, int lvl)
-        {
-            _unsortedLogger.Log(message, color, context, lvl);
         }
 
         #endregion
@@ -440,46 +304,10 @@ namespace UnityEngine
 #if !ULOGGER_WARNINGS_ON
         [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
 #endif
-        public static void LogWarning<TLoggerTag>(TLoggerTag enumValue, string message, int lvl)
-            where TLoggerTag : struct, Enum
-        {
-            GetLogger(enumValue).LogWarning(message, lvl);
-        }
-
-#if !ULOGGER_WARNINGS_ON
-        [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
-#endif
         public static void LogWarning<TLoggerTag>(TLoggerTag enumValue, string message, Color color, Object context)
             where TLoggerTag : struct, Enum
         {
             GetLogger(enumValue).LogWarning(message, color, context);
-        }
-
-#if !ULOGGER_WARNINGS_ON
-        [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
-#endif
-        public static void LogWarning<TLoggerTag>(TLoggerTag enumValue, string message, Color color, int lvl)
-            where TLoggerTag : struct, Enum
-        {
-            GetLogger(enumValue).LogWarning(message, color, lvl);
-        }
-
-#if !ULOGGER_WARNINGS_ON
-        [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
-#endif
-        public static void LogWarning<TLoggerTag>(TLoggerTag enumValue, string message, Object context, int lvl)
-            where TLoggerTag : struct, Enum
-        {
-            GetLogger(enumValue).LogWarning(message, context, lvl);
-        }
-
-#if !ULOGGER_WARNINGS_ON
-        [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
-#endif
-        public static void LogWarning<TLoggerTag>(TLoggerTag enumValue, string message, Color color, Object context, int lvl)
-            where TLoggerTag : struct, Enum
-        {
-            GetLogger(enumValue).LogWarning(message, color, context, lvl);
         }
 
 #if !ULOGGER_WARNINGS_ON
@@ -509,41 +337,9 @@ namespace UnityEngine
 #if !ULOGGER_WARNINGS_ON
         [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
 #endif
-        public static void LogWarning(string message, int lvl)
-        {
-            _unsortedLogger.LogWarning(message, lvl);
-        }
-
-#if !ULOGGER_WARNINGS_ON
-        [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
-#endif
         public static void LogWarning(string message, Color color, Object context)
         {
             _unsortedLogger.LogWarning(message, color, context);
-        }
-
-#if !ULOGGER_WARNINGS_ON
-        [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
-#endif
-        public static void LogWarning(string message, Color color, int lvl)
-        {
-            _unsortedLogger.LogWarning(message, color, lvl);
-        }
-
-#if !ULOGGER_WARNINGS_ON
-        [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
-#endif
-        public static void LogWarning(string message, Object context, int lvl)
-        {
-            _unsortedLogger.LogWarning(message, context, lvl);
-        }
-
-#if !ULOGGER_WARNINGS_ON
-        [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
-#endif
-        public static void LogWarning(string message, Color color, Object context, int lvl)
-        {
-            _unsortedLogger.LogWarning(message, color, context, lvl);
         }
 
         #endregion
@@ -580,46 +376,10 @@ namespace UnityEngine
 #if !ULOGGER_ERRORS_ON
         [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
 #endif
-        public static void LogError<TLoggerTag>(TLoggerTag enumValue, string message, int lvl)
-            where TLoggerTag : struct, Enum
-        {
-            GetLogger(enumValue).LogError(message, lvl);
-        }
-
-#if !ULOGGER_ERRORS_ON
-        [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
-#endif
         public static void LogError<TLoggerTag>(TLoggerTag enumValue, string message, Color color, Object context)
             where TLoggerTag : struct, Enum
         {
             GetLogger(enumValue).LogError(message, color, context);
-        }
-
-#if !ULOGGER_ERRORS_ON
-        [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
-#endif
-        public static void LogError<TLoggerTag>(TLoggerTag enumValue, string message, Color color, int lvl)
-            where TLoggerTag : struct, Enum
-        {
-            GetLogger(enumValue).LogError(message, color, lvl);
-        }
-
-#if !ULOGGER_ERRORS_ON
-        [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
-#endif
-        public static void LogError<TLoggerTag>(TLoggerTag enumValue, string message, Object context, int lvl)
-            where TLoggerTag : struct, Enum
-        {
-            GetLogger(enumValue).LogError(message, context, lvl);
-        }
-
-#if !ULOGGER_ERRORS_ON
-        [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
-#endif
-        public static void LogError<TLoggerTag>(TLoggerTag enumValue, string message, Color color, Object context, int lvl)
-            where TLoggerTag : struct, Enum
-        {
-            GetLogger(enumValue).LogError(message, color, context, lvl);
         }
 
 #if !ULOGGER_ERRORS_ON
@@ -649,41 +409,9 @@ namespace UnityEngine
 #if !ULOGGER_ERRORS_ON
         [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
 #endif
-        public static void LogError(string message, int lvl)
-        {
-            _unsortedLogger.LogError(message, lvl);
-        }
-
-#if !ULOGGER_ERRORS_ON
-        [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
-#endif
         public static void LogError(string message, Color color, Object context)
         {
             _unsortedLogger.LogError(message, color, context);
-        }
-
-#if !ULOGGER_ERRORS_ON
-        [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
-#endif
-        public static void LogError(string message, Color color, int lvl)
-        {
-            _unsortedLogger.LogError(message, color, lvl);
-        }
-
-#if !ULOGGER_ERRORS_ON
-        [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
-#endif
-        public static void LogError(string message, Object context, int lvl)
-        {
-            _unsortedLogger.LogError(message, context, lvl);
-        }
-
-#if !ULOGGER_ERRORS_ON
-        [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
-#endif
-        public static void LogError(string message, Color color, Object context, int lvl)
-        {
-            _unsortedLogger.LogError(message, color, context, lvl);
         }
 
         #endregion
