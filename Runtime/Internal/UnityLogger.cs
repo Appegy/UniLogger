@@ -27,6 +27,8 @@ namespace UnityEngine
 
         public void LogFormat(LogType logType, Object context, string format, params object[] args)
         {
+            
+#pragma warning disable CS1522 // Ignore: Empty switch block when all logs are enabled
             switch (logType)
             {
 #if !ULOGGER_LOGS_ON
@@ -42,6 +44,7 @@ namespace UnityEngine
                     return;
 #endif
             }
+#pragma warning restore CS1522 // Restore: Empty switch block when all logs are enabled
 
             string message;
             if (args == null || args.Length == 0)
