@@ -7,6 +7,7 @@ namespace Appegy.UniLogger.Example
     {
         private void Start()
         {
+            Debug.Assert(false, "Test Assert");
             Assert.IsTrue(false, "Test Assert");
         }
     }

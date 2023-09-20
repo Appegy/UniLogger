@@ -11,29 +11,24 @@ namespace UnityEngine
             _config = config;
         }
 
-        public bool IsLevelSupported(int level)
-        {
-            return _config.IsLevelSupported(_tag, level);
-        }
-
-        public int GetLogLevel()
-        {
-            return _config.GetLevel(_tag);
-        }
-
-        internal void SendLogToUnity(LogType logType, string message, Color color, Object context, int level)
+        internal void SendLogToUnity(LogLevel logLevel, string message, Color color, Object context)
         {
             if (UnityLogHandler == null)
             {
-                Debug.unityLogger.Log(logType, (object)message, context);
+                Debug.unityLogger.Log(logLevel.ConvertToLogType(), (object)message, context);
                 return;
             }
-            if (!_config.IsLevelSupported(_tag, level)) return;
-            var line = new LogEntry(_tag, logType, message, color, context, level);
+            
+            if (!_config.IsLogEnabled(_tag, logLevel))
+            {
+                return;
+            }
+            
+            var line = new LogEntry(_tag, logLevel, message, color, context);
             var formattedMessage = Config.UnityFormatter != null ? Config.UnityFormatter.Format(line) : message;
 
             _logsHandler = onLogReceived;
-            DefaultLogger.Log(logType, (object)formattedMessage, context);
+            DefaultLogger.Log(logLevel.ConvertToLogType(), (object)formattedMessage, context);
             _logsHandler = null;
 
             void onLogReceived(string condition, string stacktrace, LogType type)
@@ -44,7 +39,7 @@ namespace UnityEngine
 
         internal void BroadcastUnobservedLog(string condition, string stacktrace, LogType type)
         {
-            var line = new LogEntry(_tag, type, condition, default, null, 0);
+            var line = new LogEntry(_tag, type.ConvertToLogLevel(), condition, default, null);
             BroadcastLog(line, stacktrace);
         }
 
@@ -54,9 +49,9 @@ namespace UnityEngine
             {
                 try
                 {
-                    var targetStackTrace = target.NeedExtractStackTraceFor(line.LogType) ? stackTrace : null;
-                    var (msg, st) = target.FormatLog(line, targetStackTrace);
-                    target.Log(msg, st);
+                    var formattedMessage = target.Formatter != null ? target.Formatter.Format(line) : line.String;
+                    var targetStackTrace = target.GetStackTraceEnabled(line.LogLevel) ? stackTrace : null;
+                    target.Log(formattedMessage, targetStackTrace);
                 }
                 catch
                 {

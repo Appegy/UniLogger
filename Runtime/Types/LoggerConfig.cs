@@ -7,7 +7,7 @@ namespace UnityEngine
     public class LoggerConfig
     {
         private const string KeyPrefix = nameof(UnityEngine) + "." + nameof(ULogger) + ".Level.";
-        private readonly ConcurrentDictionary<Tag, int> _loggingLevelCache = new ConcurrentDictionary<Tag, int>();
+        private readonly ConcurrentDictionary<(Tag, LogLevel), bool> _loggingLevelCache = new ConcurrentDictionary<(Tag, LogLevel), bool>();
 
         internal List<Target> Targets { get; } = new List<Target>();
 
@@ -19,69 +19,62 @@ namespace UnityEngine
             return this;
         }
 
-        public int GetLevel<TLoggerType>(TLoggerType type)
+        public bool IsLogEnabled<TLoggerType>(TLoggerType enumType, LogLevel type)
             where TLoggerType : struct, Enum
         {
-            return GetLevel(typeof(TLoggerType).Name, type.ToString());
+            var tag = enumType.GetTag();
+            return IsLogEnabled(tag, type);
         }
 
-        public int GetLevel(string tag, string type)
+        public bool IsLogEnabled(string category, string name, LogLevel type)
         {
-            var category = new Tag(tag, type);
-            return GetLevel(category);
+            var tag = new Tag(category, name);
+            return IsLogEnabled(tag, type);
         }
 
-        public void SetLoggingLevel<TLoggerType>(TLoggerType type, int level)
+        public bool IsLogEnabled(Tag tag, LogLevel type)
+        {
+            var key = (tag, level: type);
+            if (!_loggingLevelCache.TryGetValue(key, out var supported))
+            {
+                supported = ReadFromPrefs(tag, type);
+                _loggingLevelCache[key] = supported;
+            }
+            return supported;
+        }
+
+        public void SetLogEnabled<TLoggerType>(TLoggerType enumType, LogLevel type, bool enabled)
             where TLoggerType : struct, Enum
         {
-            SetLoggingLevel(new Tag(typeof(TLoggerType).Name, type.ToString()), level);
+            var tag = enumType.GetTag();
+            SetLogEnabled(tag, type, enabled);
         }
 
-        public void SetLoggingLevel(string tag, string type, int level)
+        public void SetLogEnabled(string category, string name, LogLevel level, bool enabled)
         {
-            SetLoggingLevel(new Tag(tag, type), level);
+            var tag = new Tag(category, name);
+            SetLogEnabled(tag, level, enabled);
         }
 
-        internal bool IsLevelSupported(Tag tag, int level)
+        public void SetLogEnabled(Tag tag, LogLevel type, bool enabled)
         {
-            return level <= GetLevel(tag);
-        }
-
-        internal int GetLevel(Tag tag)
-        {
-            try
-            {
-                if (!_loggingLevelCache.TryGetValue(tag, out var level))
-                {
-                    level = ReadLevelFromPrefs(tag);
-                    _loggingLevelCache[tag] = level;
-                }
-                return level;
-            }
-            catch
-            {
-                return int.MaxValue;
-            }
-        }
-
-        internal void SetLoggingLevel(Tag tag, int level)
-        {
-            if (_loggingLevelCache.TryGetValue(tag, out var cachedLevel) && cachedLevel == level)
+            var key = (tag, level: type);
+            if (_loggingLevelCache.TryGetValue(key, out var current) && current == enabled)
             {
                 return;
             }
-            _loggingLevelCache[tag] = level;
-            WriteLevelToPrefs(tag, level);
+            _loggingLevelCache[key] = enabled;
+            WriteToPrefs(tag, type, enabled);
         }
 
-        private static int ReadLevelFromPrefs(Tag tag)
+        private static bool ReadFromPrefs(Tag tag, LogLevel type)
         {
-            return PlayerPrefs.GetInt(KeyPrefix + tag.ToLongString(), 1);
+            return PlayerPrefs.GetInt(KeyPrefix + tag.ToLongString() + "." + type, 1) == 1;
         }
 
-        private static void WriteLevelToPrefs(Tag tag, int level)
+        private static void WriteToPrefs(Tag tag, LogLevel type, bool enabled)
         {
-            PlayerPrefs.SetInt(KeyPrefix + tag.ToLongString(), level);
+            PlayerPrefs.SetInt(KeyPrefix + tag.ToLongString() + "." + type, enabled ? 1 : 0);
         }
     }
 }

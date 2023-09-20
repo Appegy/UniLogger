@@ -27,7 +27,6 @@ namespace UnityEngine
 
         public void LogFormat(LogType logType, Object context, string format, params object[] args)
         {
-            
 #pragma warning disable CS1522 // Ignore: Empty switch block when all logs are enabled
             switch (logType)
             {
@@ -55,7 +54,8 @@ namespace UnityEngine
             {
                 message = string.Format(format, args);
             }
-            _unsortedLogger.Log(logType, message, context, 0);
+            
+            _unsortedLogger.SendLogToUnity(logType.ConvertToLogLevel(), message, default, context);
         }
     }
 }

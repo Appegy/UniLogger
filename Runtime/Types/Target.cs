@@ -1,27 +1,42 @@
-﻿namespace UnityEngine
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using JetBrains.Annotations;
+
+namespace UnityEngine
 {
     public abstract class Target
     {
+        private static readonly Dictionary<LogLevel, bool> _stackTraceLogType = new Dictionary<LogLevel, bool>();
+
+        [NotNull]
         public LoggerConfig Config { get; }
+
+        [CanBeNull]
         public Formatter Formatter { get; }
 
-        protected Target(LoggerConfig config, Formatter formatter)
+        protected Target([NotNull] LoggerConfig config, [CanBeNull] Formatter formatter)
         {
             Config = config;
             Formatter = formatter;
+            foreach (var logType in Enum.GetValues(typeof(LogLevel)).OfType<LogLevel>())
+            {
+                SetStackTraceEnabled(logType, true);
+            }
         }
 
-        public virtual (string Massage, string StackTrace) FormatLog(LogEntry log, string stackTrace)
+        public Target SetStackTraceEnabled(LogLevel logLevel, bool enabled)
         {
-            return (Formatter.Format(log), stackTrace);
+            _stackTraceLogType[logLevel] = enabled;
+            return this;
         }
 
-        public abstract void Log(string message, string stackTrace);
-
-        public virtual bool NeedExtractStackTraceFor(LogType logType)
+        public bool GetStackTraceEnabled(LogLevel logLevel)
         {
-            return Formatter.GetStackTraceLogType(logType) != StackTraceLogType.None;
+            return _stackTraceLogType[logLevel];
         }
+
+        public abstract void Log(string message, [CanBeNull] string stackTrace);
 
         public virtual void Flush()
         {
