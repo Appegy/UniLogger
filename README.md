@@ -118,7 +118,9 @@ public class ExampleBehaviour : MonoBehaviour
 }
 ```
 
-![example](.Images/01_quickstart_example.png)
+<p align="center">
+  <img src=".Images/01_quickstart_example.png">
+</p>
 
 ## Logger tags
 
@@ -160,7 +162,9 @@ public class ExampleBehaviour : MonoBehaviour
 }
 ```
 
-![example](.Images/02_multi_tagging.png)
+<p align="center">
+  <img src=".Images/02_multi_tagging.png">
+</p>
 
 
 ## Logs filtering
