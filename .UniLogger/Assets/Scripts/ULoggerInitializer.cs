@@ -30,8 +30,18 @@ namespace Appegy.UniLogger.Example
                 ? new Formatter(FormatOptions.RichText | FormatOptions.Tags)
                 : new Formatter(FormatOptions.Tags | FormatOptions.LogType);
 
+            // Prepare filterer for unity target (by default all logs are allowed)
+            var filterer = new Filterer(true);
+
+            // Now you can disable logs in filterer by log's level or tag
+            // For example
+            // Disable all Trace logs:
+            // filterer.SetAllowed(LogLevel.Trace, false);
+            // Disable all logs with tag Unsorted
+            // filterer.SetAllowed("Unsorted", false); // Disable all unsorted logs
+
             // When formatter and filterer are ready - initialize logger 
-            ULogger.Initialize(formatter);
+            ULogger.Initialize(formatter, filterer);
         }
     }
 }

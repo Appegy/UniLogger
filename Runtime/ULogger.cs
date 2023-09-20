@@ -6,58 +6,73 @@ namespace UnityEngine
     public partial class ULogger
     {
         private readonly IReadOnlyList<string> _tags;
-        private readonly LoggerConfig _config;
 
-        internal ULogger(LoggerConfig config, IEnumerable<string> tags)
+        internal ULogger(IEnumerable<string> tags)
         {
             _tags = tags.Distinct().OrderBy(c => c).ToList();
-            _config = config;
         }
 
         internal void SendLogToUnity(LogLevel logLevel, string message, Color color, Object context)
         {
-            if (UnityLogHandler == null)
+            if (Data == null)
             {
                 Debug.unityLogger.Log(logLevel.ConvertToLogType(), (object)message, context);
                 return;
             }
 
-            if (_tags.All(c => !_config.IsTagEnabled(c, logLevel)))
+            // means it is possible to send log to Unity, catch using Application.logMessageReceivedThreaded and broadcast to other targets
+            if (WillBeAllowedByFilterer(Data.UnityFilterer, logLevel, _tags))
             {
-                return;
+                var line = new LogEntry(_tags.Where(c => Data.UnityFilterer.IsAllowed(logLevel, c)), logLevel, message, color, context);
+                var formattedMessage = Data.UnityFormatter.Format(line);
+
+                var manualStacktrace = string.Empty;
+                if (Application.GetStackTraceLogType(logLevel.ConvertToLogType()) == StackTraceLogType.None &&
+                    Data.Targets.Any(c => WillBeAllowedByFilterer(c.Filterer, logLevel, _tags) && c.GetStackTraceEnabled(logLevel)))
+                {
+                    manualStacktrace = StackTraceUtility.ExtractStackTrace();
+                }
+
+                _logsHandler = onLogReceived;
+                Data.LogHandler.Default.Log(logLevel.ConvertToLogType(), (object)formattedMessage, context);
+                _logsHandler = null;
+
+                void onLogReceived(string condition, string stacktrace, LogType type)
+                {
+                    if (string.IsNullOrEmpty(stacktrace))
+                    {
+                        stacktrace = manualStacktrace;
+                    }
+                    BroadcastLog(Data, _tags, logLevel, message, stacktrace, color, context);
+                }
             }
-
-            var line = new LogEntry(_tags.Where(c => _config.IsTagEnabled(c, logLevel)), logLevel, message, color, context);
-            var formattedMessage = Config.UnityFormatter != null ? Config.UnityFormatter.Format(line) : message;
-
-            _logsHandler = onLogReceived;
-            DefaultLogger.Log(logLevel.ConvertToLogType(), (object)formattedMessage, context);
-            _logsHandler = null;
-
-            void onLogReceived(string condition, string stacktrace, LogType type)
+            // means that this log should not be sent to Unity, but can be sent to other targets
+            else
             {
-                BroadcastLog(line, stacktrace);
+                var manualStacktrace = string.Empty;
+                if (Data.Targets.Any(c => WillBeAllowedByFilterer(c.Filterer, logLevel, _tags) && c.GetStackTraceEnabled(logLevel)))
+                {
+                    manualStacktrace = StackTraceUtility.ExtractStackTrace();
+                }
+                BroadcastLog(Data, _tags, logLevel, message, manualStacktrace, color, context);
             }
         }
 
-        internal void BroadcastUnobservedLog(string condition, string stacktrace, LogType type)
+        internal void BroadcastUnobservedLog(string message, string stacktrace, LogType type)
         {
+            if (Data == null) return;
             var logLevel = type.ConvertToLogLevel();
-            if (_tags.All(c => !_config.IsTagEnabled(c, logLevel)))
-            {
-                return;
-            }
-            var line = new LogEntry(_tags.Where(c => _config.IsTagEnabled(c, logLevel)), logLevel, condition, default, null);
-            BroadcastLog(line, stacktrace);
+            BroadcastLog(Data, _tags, logLevel, message, stacktrace, default, default);
         }
 
-        private void BroadcastLog(LogEntry line, string stackTrace)
+        private static void BroadcastLog(ULoggerData data, IReadOnlyList<string> tags, LogLevel logLevel, string message, string stackTrace, Color color, Object context)
         {
-            foreach (var target in Config.Targets)
+            foreach (var target in data.Targets.Where(c => WillBeAllowedByFilterer(c.Filterer, logLevel, tags)))
             {
                 try
                 {
-                    var formattedMessage = target.Formatter != null ? target.Formatter.Format(line) : line.String;
+                    var line = new LogEntry(tags.Where(c => target.Filterer.IsAllowed(logLevel, c)), logLevel, message, color, context);
+                    var formattedMessage = target.Formatter.Format(line);
                     var targetStackTrace = target.GetStackTraceEnabled(line.LogLevel) ? stackTrace : null;
                     target.Log(formattedMessage, targetStackTrace);
                 }
@@ -66,6 +81,11 @@ namespace UnityEngine
                     // just don't fail on log
                 }
             }
+        }
+
+        private static bool WillBeAllowedByFilterer(Filterer filterer, LogLevel logLevel, IEnumerable<string> tags)
+        {
+            return tags.Any(c => filterer.IsAllowed(logLevel, c));
         }
     }
 }

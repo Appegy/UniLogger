@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Collections.Generic;
 using System.Text;
 
 namespace UnityEngine
@@ -28,6 +26,11 @@ namespace UnityEngine
 
         public string Format(LogEntry line)
         {
+            if (!_anyFormat)
+            {
+                return line.String;
+            }
+
             StringBuilder builder = null;
             try
             {

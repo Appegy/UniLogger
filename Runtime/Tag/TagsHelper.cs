@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Runtime.Serialization;
 
 namespace UnityEngine
 {
@@ -18,9 +17,10 @@ namespace UnityEngine
         {
             return tag switch
             {
-                Enum enumTag => enumTag.GetTag(),
-                Type typeTag => typeTag.GetTag(),
+                null => string.Empty,
                 string stringTag => stringTag,
+                Type typeTag => typeTag.GetTag(),
+                Enum enumTag => enumTag.GetTag(),
                 _ => tag.ToString()
             };
         }
