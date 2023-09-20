@@ -20,7 +20,7 @@ namespace Appegy.UniLogger.Example
         {
             await Task.Delay(TimeSpan.FromSeconds(_throwAfter));
             _logger.Log("Throwing from threaded task");
-            
+
             // Won't be showed by Unity's default logger
             throw new Exception("Exception from threaded task");
         }

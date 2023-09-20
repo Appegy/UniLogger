@@ -1,25 +1,29 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using JetBrains.Annotations;
+﻿using JetBrains.Annotations;
+using static UnityEngine.LogLevelExtensions;
 
 namespace UnityEngine
 {
     public abstract class Target
     {
-        private static readonly Dictionary<LogLevel, bool> _stackTraceLogType = new Dictionary<LogLevel, bool>();
+        private readonly bool[] _stackTraceLogType;
 
         [NotNull]
-        public LoggerConfig Config { get; }
-
-        [CanBeNull]
         public Formatter Formatter { get; }
 
-        protected Target([NotNull] LoggerConfig config, [CanBeNull] Formatter formatter)
+        [NotNull]
+        public Filterer Filterer { get; }
+
+        protected Target() : this(null, null)
         {
-            Config = config;
-            Formatter = formatter;
-            foreach (var logType in Enum.GetValues(typeof(LogLevel)).OfType<LogLevel>())
+        }
+
+        protected Target([CanBeNull] Formatter formatter = null, [CanBeNull] Filterer filterer = null)
+        {
+            Formatter = formatter ?? new Formatter();
+            Filterer = filterer ?? new Filterer(true);
+
+            _stackTraceLogType = new bool[LogTypes.Count];
+            foreach (var logType in LogTypes)
             {
                 SetStackTraceEnabled(logType, true);
             }
@@ -27,13 +31,13 @@ namespace UnityEngine
 
         public Target SetStackTraceEnabled(LogLevel logLevel, bool enabled)
         {
-            _stackTraceLogType[logLevel] = enabled;
+            _stackTraceLogType[(int)logLevel] = enabled;
             return this;
         }
 
         public bool GetStackTraceEnabled(LogLevel logLevel)
         {
-            return _stackTraceLogType[logLevel];
+            return _stackTraceLogType[(int)logLevel];
         }
 
         public abstract void Log(string message, [CanBeNull] string stackTrace);

@@ -6,7 +6,7 @@
         public const string Unsorted = "Unsorted";
         public const string Internal = "Internal";
         public const string Disabled = "Disabled";
-        
+
         public const string Unobserved = "Unobserved";
     }
 }

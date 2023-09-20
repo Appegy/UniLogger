@@ -6,7 +6,7 @@ namespace Appegy.UniLogger.Example
     public class ExceptionLogging : MonoBehaviour
     {
         private static readonly ULogger _logger1 = ULogger.GetLogger(ExampleLogs.Tag1);
-        
+
         private void Start()
         {
             ThrowMethod();
@@ -24,7 +24,7 @@ namespace Appegy.UniLogger.Example
                 _logger1.LogException(e, this);
                 Debug.LogException(e, this);
             }
-            
+
             throw new Exception("Throw exception");
         }
     }

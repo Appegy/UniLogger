@@ -16,7 +16,7 @@ namespace Appegy.UniLogger
             switch (state)
             {
                 case PlayModeStateChange.ExitingPlayMode:
-                    ULogger.RestoreUnityLogger();
+                    ULogger.Terminate();
                     break;
             }
         }

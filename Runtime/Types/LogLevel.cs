@@ -1,18 +1,22 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace UnityEngine
 {
-    public enum LogLevel : int
+    public enum LogLevel
     {
-        Trace,
-        Log,
-        Warning,
-        Error,
-        Exception,
+        Trace = 0,
+        Log = 1,
+        Warning = 2,
+        Error = 3,
+        Exception = 4,
     }
 
-    public static class LogTypeExtensions
+    public static class LogLevelExtensions
     {
+        public static readonly IReadOnlyList<LogLevel> LogTypes = Enum.GetValues(typeof(LogType)).Cast<LogLevel>().ToArray();
+
         public static LogLevel ConvertToLogLevel(this LogType original)
         {
             return original switch

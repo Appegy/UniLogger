@@ -1,6 +1,8 @@
 {
   "dependencies": {
     "com.appegy.unilogger": "file:../..",
+    "net.tnrd.nsubstitute": "4.4.0",
+    "com.boundfoxstudios.fluentassertions": "6.8.0",
     "com.dbrizov.naughtyattributes": "2.1.4",
     "com.unity.2d.sprite": "1.0.0",
     "com.unity.ide.rider": "3.0.25",
@@ -22,7 +24,9 @@
       "url": "https://package.openupm.com",
       "scopes": [
         "com.dbrizov.naughtyattributes",
-        "com.openupm"
+        "com.boundfoxstudios.fluentassertions",
+        "com.openupm",
+        "net.tnrd.nsubstitute"
       ]
     }
   ]
