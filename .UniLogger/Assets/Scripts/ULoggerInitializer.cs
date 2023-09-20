@@ -27,8 +27,8 @@ namespace Appegy.UniLogger.Example
         {
             // Customize formatter for logs unity target 
             var formatter = Application.isEditor
-                ? new Formatter(FormatOptions.RichText | FormatOptions.TagCategory | FormatOptions.TagName)
-                : new Formatter(FormatOptions.TagCategory | FormatOptions.TagName | FormatOptions.LogType);
+                ? new Formatter(FormatOptions.RichText | FormatOptions.Tags)
+                : new Formatter(FormatOptions.Tags | FormatOptions.LogType);
 
             // When formatter and filterer are ready - initialize logger 
             ULogger.Initialize(formatter);

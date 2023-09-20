@@ -1,22 +1,20 @@
-﻿using System.Runtime.Serialization;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace Appegy.UniLogger.Example
 {
-    [LoggerTagsContainer("Example")]
     public enum ExampleLogs
     {
         Tag1,
-        [EnumMember(Value = "RenamedTag2")]
+        [LoggerTagName("RenamedTag2")]
         Tag2,
     }
-    
+
     public class CategorizedLogs : MonoBehaviour
     {
         private static readonly ULogger _logger1 = ULogger.GetLogger(ExampleLogs.Tag1);
         private static readonly ULogger _logger2 = ULogger.GetLogger(ExampleLogs.Tag2);
-        private static readonly ULogger _logger3 = ULogger.GetLogger("MyCat", "Custom"); 
-        
+        private static readonly ULogger _logger3 = ULogger.GetLogger("Tag1", "Tag2", ExampleLogs.Tag2);
+
         private void Start()
         {
             CallLogsInMethod();

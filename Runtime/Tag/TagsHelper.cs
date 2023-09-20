@@ -6,33 +6,43 @@ namespace UnityEngine
 {
     internal static class TagsHelper
     {
-        private static readonly Dictionary<Type, string> _tagCategoryCache = new Dictionary<Type, string>();
-        private static readonly Dictionary<Enum, string> _tagNamesCache = new Dictionary<Enum, string>();
+        private static readonly Dictionary<Type, string> _tagTypesCache = new Dictionary<Type, string>();
+        private static readonly Dictionary<Enum, string> _tagEnumsCache = new Dictionary<Enum, string>();
 
-        public static Tag GetTag<TLoggerTag>(this TLoggerTag tag)
-            where TLoggerTag : struct, Enum
+        public static IEnumerable<T> AsEnumerable<T>(this T item)
         {
-            return new Tag(GetTagCategory(typeof(TLoggerTag)), GetTagName(tag));
+            yield return item;
         }
 
-        private static string GetTagCategory(Type value)
+        public static string GetTag(this object tag)
         {
-            if (!_tagCategoryCache.TryGetValue(value, out var name))
+            return tag switch
             {
-                var attributes = (LoggerTagsContainerAttribute[])value.GetCustomAttributes(typeof(LoggerTagsContainerAttribute), false);
-                name = attributes.Length > 0 ? attributes[0].Category : value.ToString();
-                _tagCategoryCache[value] = name;
+                Enum enumTag => enumTag.GetTag(),
+                Type typeTag => typeTag.GetTag(),
+                string stringTag => stringTag,
+                _ => tag.ToString()
+            };
+        }
+
+        public static string GetTag(this Enum value)
+        {
+            if (!_tagEnumsCache.TryGetValue(value, out var name))
+            {
+                var attributes = (LoggerTagNameAttribute[])value.GetType().GetField(value.ToString()).GetCustomAttributes(typeof(LoggerTagNameAttribute), false);
+                name = attributes.Length > 0 ? attributes[0].Name : value.ToString();
+                _tagEnumsCache[value] = name;
             }
             return name;
         }
 
-        private static string GetTagName(Enum value)
+        public static string GetTag(this Type value)
         {
-            if (!_tagNamesCache.TryGetValue(value, out var name))
+            if (!_tagTypesCache.TryGetValue(value, out var name))
             {
-                var attributes = (EnumMemberAttribute[])value.GetType().GetField(value.ToString()).GetCustomAttributes(typeof(EnumMemberAttribute), false);
-                name = attributes.Length > 0 ? attributes[0].Value : value.ToString();
-                _tagNamesCache[value] = name;
+                var attributes = (LoggerTagNameAttribute[])value.GetCustomAttributes(typeof(LoggerTagNameAttribute), false);
+                name = attributes.Length > 0 ? attributes[0].Name : value.ToString();
+                _tagTypesCache[value] = name;
             }
             return name;
         }
