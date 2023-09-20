@@ -6,13 +6,6 @@
       "source": "local",
       "dependencies": {}
     },
-    "com.boundfoxstudios.fluentassertions": {
-      "version": "6.8.0",
-      "depth": 0,
-      "source": "registry",
-      "dependencies": {},
-      "url": "https://package.openupm.com"
-    },
     "com.dbrizov.naughtyattributes": {
       "version": "2.1.4",
       "depth": 0,
@@ -34,20 +27,11 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.ide.rider": {
-      "version": "3.0.24",
+      "version": "3.0.25",
       "depth": 0,
       "source": "registry",
       "dependencies": {
         "com.unity.ext.nunit": "1.0.6"
-      },
-      "url": "https://packages.unity.com"
-    },
-    "com.unity.ide.visualstudio": {
-      "version": "2.0.20",
-      "depth": 0,
-      "source": "registry",
-      "dependencies": {
-        "com.unity.test-framework": "1.1.9"
       },
       "url": "https://packages.unity.com"
     },
@@ -93,13 +77,6 @@
       "source": "git",
       "dependencies": {},
       "hash": "ef9dc42a669bb37089065c8f5f18167d14e139a0"
-    },
-    "net.tnrd.nsubstitute": {
-      "version": "4.4.0",
-      "depth": 0,
-      "source": "registry",
-      "dependencies": {},
-      "url": "https://package.openupm.com"
     },
     "com.unity.modules.androidjni": {
       "version": "1.0.0",
