@@ -6,19 +6,12 @@
       "source": "local",
       "dependencies": {}
     },
-    "com.boundfoxstudios.fluentassertions": {
-      "version": "6.8.0",
-      "depth": 0,
-      "source": "registry",
-      "dependencies": {},
-      "url": "https://package.openupm.com"
-    },
     "com.dbrizov.naughtyattributes": {
-      "version": "2.1.4",
+      "version": "https://github.com/dbrizov/NaughtyAttributes.git#upm",
       "depth": 0,
-      "source": "registry",
+      "source": "git",
       "dependencies": {},
-      "url": "https://package.openupm.com"
+      "hash": "8a8fa5a9659a6d63f196391c71e06c4286c8acd7"
     },
     "com.unity.2d.sprite": {
       "version": "1.0.0",
@@ -34,7 +27,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.ide.rider": {
-      "version": "3.0.24",
+      "version": "3.0.15",
       "depth": 0,
       "source": "registry",
       "dependencies": {
@@ -43,7 +36,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.ide.visualstudio": {
-      "version": "2.0.20",
+      "version": "2.0.16",
       "depth": 0,
       "source": "registry",
       "dependencies": {
@@ -59,7 +52,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.test-framework": {
-      "version": "1.1.33",
+      "version": "1.1.31",
       "depth": 0,
       "source": "registry",
       "dependencies": {
@@ -93,13 +86,6 @@
       "source": "git",
       "dependencies": {},
       "hash": "ef9dc42a669bb37089065c8f5f18167d14e139a0"
-    },
-    "net.tnrd.nsubstitute": {
-      "version": "4.4.0",
-      "depth": 0,
-      "source": "registry",
-      "dependencies": {},
-      "url": "https://package.openupm.com"
     },
     "com.unity.modules.androidjni": {
       "version": "1.0.0",
