@@ -119,7 +119,8 @@ public class ExampleBehaviour : MonoBehaviour
 ```
 
 <p align="center">
-  <img src=".Images/01_quickstart_example.png#gh-dark-mode-only">
+  <img src=".Images/01_quickstart_example_dt.png#gh-dark-mode-only">
+  <img src=".Images/01_quickstart_example_lt.png#gh-light-mode-only">
 </p>
 
 ## Logger tags
@@ -163,7 +164,8 @@ public class ExampleBehaviour : MonoBehaviour
 ```
 
 <p align="center">
-  <img src=".Images/02_multi_tagging.png#gh-dark-mode-only">
+  <img src=".Images/02_multi_tagging_dt.png#gh-dark-mode-only">
+  <img src=".Images/02_multi_tagging_lt.png#gh-light-mode-only">
 </p>
 
 
