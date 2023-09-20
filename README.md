@@ -20,11 +20,10 @@ All of these issues are addressed by ULogger.
 - [Package installation](#package-installation)
 - [Forgot about Debug.Log](#forgot-about-debuglog)
 - [Quick start](#quick-start)
-- [Advanced logger initialization](#advanced-logger-initialization)
+- [Logger tags](#logger-tags)
 - [Logs filtering](#logs-filtering)
 - [Logs formatting](#logs-formatting)
-- [Existing targets](#existing-targets)
-- [Custom targets](#custom-targets)
+- [Logs targets](#logs-targets)
 - [Removing logs from release builds](#removing-logs-from-release-builds)
 - [Why do I use UnityEngine namespace](#why-do-i-use-unityengine-namespace)
 
@@ -34,6 +33,7 @@ All of these issues are addressed by ULogger.
 ### Using OpenUPM
 
 Using [OpenUPM-CLI](https://openupm.com/docs/getting-started.html) run the command
+
 ```
 openupm add com.appegy.unilogger
 ```
@@ -54,32 +54,63 @@ Add package to the ```manifest.json```.
 
 ## Forgot about Debug.Log
 
-I strongly discourage using `Debug.Log`, `Debug.LogWarning` and `Debug.LogError` in conjunction with `ULogger`. Despite the fact that all logs sent to these methods will be tagged, formatted, and sent to targets, there will be no ability to eliminate string construction when using the methods `Log`, `LogWarning`, and `LogError`. In other words, even if `Debug.Log($"Add {count} coins")` is called and nothing appears in the console (in the case of logs deactivation), the string will still be constructed, which may slightly impact performance.
+I strongly discourage using `Debug.Log`, `Debug.LogWarning` and `Debug.LogError` in conjunction with `ULogger`. Despite the fact that all logs sent to these methods will be tagged, formatted, and sent to targets, there will be no ability to eliminate strings construction when using the methods `Log`, `LogWarning`, and `LogError`. In other words, even if `Debug.Log($"Add {count} coins")` is called and nothing appears in the console (in the case of logs deactivation), the string will still be constructed, which may slightly impact performance.
 
 ## Quick start
 
-Для быстрого начала использования `ULogger`'а достаточно создать в папаке Resources `ULoggerConfigurator` (Assets → Create → ULogger → Configurator). В этом ассете можно активировать встроенные таргеты а также настроить их форматеры. По умолчанию включен только `Unity Target`.
+First of all you have to initialize `ULogger`. To do this you should call the `ULogger.Initialize(Formatter, Filterer)` method. It's best to do this at the very start of your application, before any logs are generated, to ensure that nothing is missed. The most effective way to achieve this is by using a static method with the [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)](https://docs.unity3d.com/ScriptReference/RuntimeInitializeLoadType.SubsystemRegistration.html) attribute.
 
-С этого момента абсолюто все логи будут обрабатываться `ULogger`'ом, включая логи отправляемые через `Debug.Log`.
+During initialization, you will need to configure the Formatter and Filterer to be used for logs sent to the Unity console. You can learn how to format and filter logs in the respective sections below.
+
+```C#
+using UnityEngine;
+
+public static class ULoggerInitializer
+{
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void AutoConfigureLogger()
+    {
+        // Customize logs formatter for unity target
+        var formatter = Application.isEditor
+            ? new Formatter(FormatOptions.RichText | FormatOptions.Tags)
+            : new Formatter(FormatOptions.Tags | FormatOptions.LogType);
+
+        // Prepare filterer for unity target (by default all logs are allowed)
+        var filterer = new Filterer(true);
+
+        // When formatter and filterer are ready - initialize logger 
+        ULogger.Initialize(formatter, filterer);
+    }
+}
+```
+
+From this point forward, all logs will be processed by `ULogger`, including logs sent via Debug.Log.
 
 Example:
+
 ```C#
+using UnityEngine;
+
 public class ExampleBehaviour : MonoBehaviour
 {
     private static readonly ULogger _logger = ULogger.GetLogger("Example");
 
     private void Awake()
     {
+        // All logs sent by _logger will have "Example" tag
         _logger.Trace("_logger: Trace");
         _logger.Log("_logger: Log");
         _logger.LogWarning("_logger: Warning");
         _logger.LogError("_logger: Error");
 
+        // All logs sent by ULogger will have "Unsorted" tag
         ULogger.Trace("ULogger: Trace");
         ULogger.Log("ULogger: Log");
         ULogger.LogWarning("ULogger: Warning");
         ULogger.LogError("ULogger: Error");
 
+        // All logs sent by Debug will have "Unsorted" tag
+        // Despite the fact that this calls will work, I don't recommend to use Debug anymore
         Debug.Log("Debug: Log");
         Debug.LogWarning("Debug: Warning");
         Debug.LogError("Debug: Error");
@@ -89,7 +120,7 @@ public class ExampleBehaviour : MonoBehaviour
 
 ![example](.images/01_quickstart_example.png)
 
-## Advanced logger initialization
+## Logger tags
 
 TODO
 
@@ -101,19 +132,7 @@ TODO
 
 TODO
 
-## Existing targets
-
-<!-- omit from toc -->
-### FileTarget
-
-TODO
-
-<!-- omit from toc -->
-### InMemoryTarget
-
-TODO
-
-## Custom targets
+## Logs targets
 
 TODO
 
