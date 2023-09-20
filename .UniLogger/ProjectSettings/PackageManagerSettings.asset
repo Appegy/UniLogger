@@ -30,7 +30,6 @@ MonoBehaviour:
     m_Name: package.openupm.com
     m_Url: https://package.openupm.com
     m_Scopes:
-    - com.dbrizov.naughtyattributes
     - com.boundfoxstudios.fluentassertions
     - com.openupm
     - net.tnrd.nsubstitute
