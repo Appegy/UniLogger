@@ -60,7 +60,7 @@ I strongly discourage using `Debug.Log`, `Debug.LogWarning` and `Debug.LogError`
 
 First of all you have to initialize `ULogger`. To do this you should call the `ULogger.Initialize(Formatter, Filterer)` method. It's best to do this at the very start of your application, before any logs are generated, to ensure that nothing is missed. The most effective way to achieve this is by using a static method with the [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)](https://docs.unity3d.com/ScriptReference/RuntimeInitializeLoadType.SubsystemRegistration.html) attribute.
 
-During initialization, you will need to configure the Formatter and Filterer to be used for logs sent to the Unity console. You can learn how to format and filter logs in the respective sections below.
+During initialization, you will need to configure the Formatter and Filterer to be used for logs sent to the Unity console. You can learn how to [format](#logs-formatting) and [filter](#logs-filtering) logs in the respective sections.
 
 ```C#
 using UnityEngine;
@@ -122,7 +122,46 @@ public class ExampleBehaviour : MonoBehaviour
 
 ## Logger tags
 
-TODO
+When creating an instance of `ULogger`, you can pass any number of objects as parameters. Later all parameters will be converted to tags. Each log sent to logger instance will be marked with all of these tags. This allows you to filter logs into different targets later on. For most cases, the result of method `ToString()` will be used as the tag. However, there are a few exceptions:
+- If `null` is sent as a parameter, the tag will be the string `NULL`.
+- If a `Type` with the `TagName` attribute is sent as a parameter, the tag will be the string provided in the attribute's constructor.
+- If a `Type` without the `TagName` attribute is sent as a parameter, the tag will be the result of the `Type.Name` property.
+- If an `Enum` with the `TagName` attribute is sent as a parameter, the tag will be the string provided in the attribute's constructor.
+- If an `Enum` without the `TagName` attribute is sent as a parameter, the tag will be the result of the `ToString()` method.
+
+Example:
+```C#
+using UnityEngine;
+
+[TagName("TAG_TYPE")]
+public class ExampleBehaviour : MonoBehaviour
+{
+    public enum Tags
+    {
+        Tag1,
+        [TagName("TAG_2")]
+        Tag2,
+    }
+
+    private static readonly ULogger _logger = ULogger.GetLogger(
+        null,                     // [NULL]
+        Tags.Tag1,                // [Tag1]
+        Tags.Tag2,                // [TAG_2]
+        "TAG_STR",                // [TAG_STR]
+        typeof(Object),           // [Object]
+        typeof(ExampleBehaviour), // [TAG_TYPE]
+        15                        // [15]
+    );
+
+    private void Awake()
+    {
+        _logger.Log("Hello!");
+    }
+}
+```
+
+![example](.images/02_multi_tagging.png)
+
 
 ## Logs filtering
 
