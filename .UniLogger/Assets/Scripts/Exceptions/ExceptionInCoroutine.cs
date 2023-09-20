@@ -7,10 +7,10 @@ namespace Appegy.UniLogger.Example
     public class ExceptionInCoroutine : MonoBehaviour
     {
         private static readonly ULogger _logger = ULogger.GetLogger("ExceptionInCoroutine");
-        
+
         [SerializeField]
         private float _throwAfter = 1f;
-        
+
         private void Start()
         {
             StartCoroutine(ThrowRoutine());
