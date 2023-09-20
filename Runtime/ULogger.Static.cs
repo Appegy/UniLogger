@@ -32,9 +32,10 @@ namespace UnityEngine
         internal static ILogHandler UnityLogHandler { get; private set; }
         internal static ILogHandler CurrentLogHandler { get; private set; }
 
-        public static LoggerConfig Initialize()
+        public static LoggerConfig Initialize(Formatter unityFormatter)
         {
             // prepare default loggers and swap unity logger to custom
+            Config.UnityFormatter = unityFormatter;
             DefaultLogger = new Logger(Debug.unityLogger.logHandler);
             UnityLogHandler = Debug.unityLogger.logHandler;
             CurrentLogHandler = new UnityLogger();
