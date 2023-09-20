@@ -148,6 +148,8 @@ namespace UnityEngine
                 // TODO use System.Random to generate colors
                 var seed = tag.GetHashCode();
                 Random.InitState(seed);
+                
+                // TODO find convenient parameters for generating colors for both light and dark themes
                 color = Random.ColorHSV(0.4f, 0.6f, 1f, 1f, 0.5f, 1f);
                 _coloredCategories[tag] = color;
             }
