@@ -2,7 +2,7 @@
 
 namespace UnityEngine
 {
-    [AttributeUsage(AttributeTargets.Class)]
+    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Class)]
     public class LoggerTagNameAttribute : Attribute
     {
         public readonly string Name;

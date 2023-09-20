@@ -1,13 +1,16 @@
+using System.Collections.Generic;
+using System.Linq;
+
 namespace UnityEngine
 {
     public partial class ULogger
     {
-        private readonly Tag _tag;
+        private readonly IReadOnlyList<string> _tags;
         private readonly LoggerConfig _config;
 
-        internal ULogger(Tag tag, LoggerConfig config)
+        internal ULogger(LoggerConfig config, IEnumerable<string> tags)
         {
-            _tag = tag;
+            _tags = tags.Distinct().OrderBy(c => c).ToList();
             _config = config;
         }
 
@@ -18,13 +21,13 @@ namespace UnityEngine
                 Debug.unityLogger.Log(logLevel.ConvertToLogType(), (object)message, context);
                 return;
             }
-            
-            if (!_config.IsLogEnabled(_tag, logLevel))
+
+            if (_tags.All(c => !_config.IsTagEnabled(c, logLevel)))
             {
                 return;
             }
-            
-            var line = new LogEntry(_tag, logLevel, message, color, context);
+
+            var line = new LogEntry(_tags.Where(c => _config.IsTagEnabled(c, logLevel)), logLevel, message, color, context);
             var formattedMessage = Config.UnityFormatter != null ? Config.UnityFormatter.Format(line) : message;
 
             _logsHandler = onLogReceived;
@@ -39,7 +42,12 @@ namespace UnityEngine
 
         internal void BroadcastUnobservedLog(string condition, string stacktrace, LogType type)
         {
-            var line = new LogEntry(_tag, type.ConvertToLogLevel(), condition, default, null);
+            var logLevel = type.ConvertToLogLevel();
+            if (_tags.All(c => !_config.IsTagEnabled(c, logLevel)))
+            {
+                return;
+            }
+            var line = new LogEntry(_tags.Where(c => _config.IsTagEnabled(c, logLevel)), logLevel, condition, default, null);
             BroadcastLog(line, stacktrace);
         }
 

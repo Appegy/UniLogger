@@ -7,23 +7,22 @@ namespace UnityEngine
 {
     public class Formatter
     {
+        private static readonly Dictionary<string, Color> _coloredCategories = new Dictionary<string, Color>();
 
-        private static readonly Dictionary<Tag, Color> _coloredCategories = new Dictionary<Tag, Color>();
-
+        private readonly bool _anyFormat;
         private readonly bool _richText;
         private readonly bool _showTime;
         private readonly bool _showThread;
-        private readonly bool _showTagCategory;
         private readonly bool _showTagName;
         private readonly bool _showType;
 
         public Formatter(FormatOptions options = FormatOptions.None)
         {
+            _anyFormat = options != FormatOptions.None;
             _richText = options.HasFlag(FormatOptions.RichText);
             _showTime = options.HasFlag(FormatOptions.Time);
             _showThread = options.HasFlag(FormatOptions.Thread);
-            _showTagCategory = options.HasFlag(FormatOptions.TagCategory);
-            _showTagName = options.HasFlag(FormatOptions.TagName);
+            _showTagName = options.HasFlag(FormatOptions.Tags);
             _showType = options.HasFlag(FormatOptions.LogType);
         }
 
@@ -36,7 +35,7 @@ namespace UnityEngine
                 AppendTime(line, builder);
                 AppendType(line, builder);
                 AppendThread(line, builder);
-                AppendTag(line, builder);
+                AppendTags(line, builder);
                 AppendMessage(line, builder);
 
                 return builder.ToString();
@@ -91,32 +90,36 @@ namespace UnityEngine
             builder.Append("]");
         }
 
-        private void AppendTag(LogEntry line, StringBuilder builder)
+        private void AppendTags(LogEntry line, StringBuilder builder)
         {
-            if (!_showTagCategory && !_showTagName) return;
-            if (_richText)
+            if (!_showTagName) return;
+
+            foreach (var tag in line.Tags)
             {
-                builder.Append("<color=#");
-                builder.Append(ColorUtility.ToHtmlStringRGBA(GetColor(line.Tag)));
-                builder.Append(">");
-                builder.Append("[");
-                if (_showTagCategory) builder.Append(line.Tag.Category);
-                if (_showTagCategory && _showTagName) builder.Append(":");
-                if (_showTagName) builder.Append(line.Tag.Name);
-                builder.Append("]</color> ");
-            }
-            else
-            {
-                builder.Append("[");
-                if (_showTagCategory) builder.Append(line.Tag.Category);
-                if (_showTagCategory && _showTagName) builder.Append(":");
-                if (_showTagName) builder.Append(line.Tag.Name);
-                builder.Append("] ");
+                if (_richText)
+                {
+                    builder.Append("<color=#");
+                    builder.Append(ColorUtility.ToHtmlStringRGBA(GetColor(tag)));
+                    builder.Append(">");
+                    builder.Append("[");
+                    builder.Append(tag);
+                    builder.Append("]</color>");
+                }
+                else
+                {
+                    builder.Append("[");
+                    builder.Append(tag);
+                    builder.Append("]");
+                }
             }
         }
 
         private void AppendMessage(LogEntry line, StringBuilder builder)
         {
+            if (_anyFormat)
+            {
+                builder.Append(' ');
+            }
             if (_richText && line.IsColored)
             {
                 builder.Append("<color=#");
@@ -131,13 +134,14 @@ namespace UnityEngine
             }
         }
 
-        private static Color GetColor(Tag tag)
+        private static Color GetColor(string tag)
         {
+            // TODO Create Tag class with Name and Color and cache Color on logger creation
             Color color;
             lock (_coloredCategories)
             {
                 if (_coloredCategories.TryGetValue(tag, out color)) return color;
-                var seed = tag.ToLongString().GetHashCode();
+                var seed = tag.GetHashCode();
                 var rnd = new System.Random(seed);
                 var r = GetRandomNumberInRange(rnd, 0.5f, 0.97f);
                 var g = GetRandomNumberInRange(rnd, 0.5f, 0.97f);

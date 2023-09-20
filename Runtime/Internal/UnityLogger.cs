@@ -40,6 +40,7 @@ namespace UnityEngine
 #endif
 #if !ULOGGER_ERRORS_ON
                 case LogType.Error:
+                case LogType.Assert:
                     return;
 #endif
             }

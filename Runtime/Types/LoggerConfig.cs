@@ -1,13 +1,14 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace UnityEngine
 {
     public class LoggerConfig
     {
-        private const string KeyPrefix = nameof(UnityEngine) + "." + nameof(ULogger) + ".Level.";
-        private readonly ConcurrentDictionary<(Tag, LogLevel), bool> _loggingLevelCache = new ConcurrentDictionary<(Tag, LogLevel), bool>();
+        private const string KeyPrefix = nameof(ULogger) + ".Tags.";
+        private readonly ConcurrentDictionary<(string, LogLevel), bool> _loggingLevelCache = new ConcurrentDictionary<(string, LogLevel), bool>();
 
         internal List<Target> Targets { get; } = new List<Target>();
 
@@ -19,22 +20,20 @@ namespace UnityEngine
             return this;
         }
 
-        public bool IsLogEnabled<TLoggerType>(TLoggerType enumType, LogLevel type)
+        public bool IsTagEnabled<TLoggerType>(TLoggerType tag, LogLevel type)
             where TLoggerType : struct, Enum
         {
-            var tag = enumType.GetTag();
-            return IsLogEnabled(tag, type);
+            return IsTagEnabled(tag.GetTag(), type);
         }
 
-        public bool IsLogEnabled(string category, string name, LogLevel type)
+        public bool IsTagEnabled(Type tag, LogLevel type)
         {
-            var tag = new Tag(category, name);
-            return IsLogEnabled(tag, type);
+            return IsTagEnabled(tag.GetTag(), type);
         }
 
-        public bool IsLogEnabled(Tag tag, LogLevel type)
+        public bool IsTagEnabled(string tag, LogLevel type)
         {
-            var key = (tag, level: type);
+            var key = (tag, type);
             if (!_loggingLevelCache.TryGetValue(key, out var supported))
             {
                 supported = ReadFromPrefs(tag, type);
@@ -43,20 +42,18 @@ namespace UnityEngine
             return supported;
         }
 
-        public void SetLogEnabled<TLoggerType>(TLoggerType enumType, LogLevel type, bool enabled)
+        public void SetTagEnabled<TLoggerType>(TLoggerType tag, LogLevel type, bool enabled)
             where TLoggerType : struct, Enum
         {
-            var tag = enumType.GetTag();
-            SetLogEnabled(tag, type, enabled);
+            SetTagEnabled(tag.GetTag(), type, enabled);
         }
 
-        public void SetLogEnabled(string category, string name, LogLevel level, bool enabled)
+        public void SetTagEnabled(Type tag, LogLevel type, bool enabled)
         {
-            var tag = new Tag(category, name);
-            SetLogEnabled(tag, level, enabled);
+            SetTagEnabled(tag.GetTag(), type, enabled);
         }
 
-        public void SetLogEnabled(Tag tag, LogLevel type, bool enabled)
+        public void SetTagEnabled(string tag, LogLevel type, bool enabled)
         {
             var key = (tag, level: type);
             if (_loggingLevelCache.TryGetValue(key, out var current) && current == enabled)
@@ -67,14 +64,14 @@ namespace UnityEngine
             WriteToPrefs(tag, type, enabled);
         }
 
-        private static bool ReadFromPrefs(Tag tag, LogLevel type)
+        private static bool ReadFromPrefs(string tag, LogLevel type)
         {
-            return PlayerPrefs.GetInt(KeyPrefix + tag.ToLongString() + "." + type, 1) == 1;
+            return PlayerPrefs.GetInt(KeyPrefix + tag + "." + type, 1) == 1;
         }
 
-        private static void WriteToPrefs(Tag tag, LogLevel type, bool enabled)
+        private static void WriteToPrefs(string tag, LogLevel type, bool enabled)
         {
-            PlayerPrefs.SetInt(KeyPrefix + tag.ToLongString() + "." + type, enabled ? 1 : 0);
+            PlayerPrefs.SetInt(KeyPrefix + tag + "." + type, enabled ? 1 : 0);
         }
     }
 }

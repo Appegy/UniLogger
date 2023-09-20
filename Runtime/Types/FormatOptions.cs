@@ -9,8 +9,7 @@ namespace UnityEngine
         RichText = 1,
         Time = 2,
         Thread = 4,
-        TagCategory = 8,
-        TagName = 16,
-        LogType = 32,
+        Tags = 8,
+        LogType = 16,
     }
 }

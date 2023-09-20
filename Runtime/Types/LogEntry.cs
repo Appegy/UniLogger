@@ -1,11 +1,12 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 
 namespace UnityEngine
 {
     public readonly struct LogEntry
     {
-        public readonly Tag Tag;
+        public readonly IEnumerable<string> Tags;
         public readonly LogLevel LogLevel;
         public readonly string String;
         public readonly Color Color;
@@ -15,9 +16,9 @@ namespace UnityEngine
         public readonly int ThreadId;
         public readonly bool IsColored;
 
-        public LogEntry(Tag tag, LogLevel logLevel, string message, Color color, Object context)
+        public LogEntry(IEnumerable<string> tags, LogLevel logLevel, string message, Color color, Object context)
         {
-            Tag = tag;
+            Tags = tags;
             LogLevel = logLevel;
             String = message;
             Color = color;

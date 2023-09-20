@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 
@@ -27,9 +28,11 @@ namespace UnityEngine
     {
         public static readonly LoggerConfig Config = new LoggerConfig();
 
-        private static readonly Dictionary<Tag, ULogger> _loggers = new Dictionary<Tag, ULogger>();
-        private static readonly ULogger _unsortedLogger = ULogger.GetLogger(Tags.Unsorted);
+#if ULOGGER_DISABLE_ALL_LOGS
+        private static readonly ULogger _disabledLogger = new ULogger(Config, Tags.Disabled);
+#endif
 
+        private static readonly ULogger _unsortedLogger = ULogger.GetLogger(Tags.Unsorted);
         private static Action<string, string, LogType> _logsHandler;
 
         internal static ILogger DefaultLogger { get; private set; }
@@ -91,39 +94,41 @@ namespace UnityEngine
 
         #region GetLogger
 
-        public static ULogger GetLogger<TLoggerTag>(TLoggerTag enumValue)
-            where TLoggerTag : struct, Enum
+        public static ULogger GetLogger<T>(T tag)
+            where T : struct, Enum
         {
-            var tag = enumValue.GetTag();
-            return GetLogger(tag.Category, tag.Name);
+#if ULOGGER_DISABLE_ALL_LOGS
+            return _disabledLogger;
+#else
+            return new ULogger(Config, tag.GetTag().AsEnumerable());
+#endif
         }
 
-        public static ULogger GetLogger(Type name)
+        public static ULogger GetLogger(Type tag)
         {
-            return GetLogger(Tags.Default, name);
+#if ULOGGER_DISABLE_ALL_LOGS
+            return _disabledLogger;
+#else
+            return new ULogger(Config, tag.GetTag().AsEnumerable());
+#endif
         }
 
-        public static ULogger GetLogger(string category, Type type)
+        public static ULogger GetLogger(string tag)
         {
-            var attr = type.GetCustomAttribute<LoggerTagNameAttribute>(true);
-            var name = attr != null ? attr.Name : type.Name;
-            return GetLogger(category, name);
+#if ULOGGER_DISABLE_ALL_LOGS
+            return _disabledLogger;
+#else
+            return new ULogger(Config, tag.AsEnumerable());
+#endif
         }
 
-        public static ULogger GetLogger(string name)
+        public static ULogger GetLogger(params object[] tags)
         {
-            return GetLogger(Tags.Default, name);
-        }
-
-        public static ULogger GetLogger(string category, string name)
-        {
-            var tag = new Tag(category, name);
-            if (!_loggers.TryGetValue(tag, out var logger))
-            {
-                logger = new ULogger(tag, Config);
-                _loggers[tag] = logger;
-            }
-            return logger;
+#if ULOGGER_DISABLE_ALL_LOGS
+            return _disabledLogger;
+#else
+            return new ULogger(Config, tags.Select(c => c.GetTag()));
+#endif
         }
 
         #endregion
