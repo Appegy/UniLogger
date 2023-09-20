@@ -2,6 +2,7 @@
 # 📝 Optimized logger for Unity3d
 
 [![openupm](https://img.shields.io/npm/v/com.appegy.unilogger?label=openupm&registry_uri=https://package.openupm.com)](https://openupm.com/packages/com.appegy.unilogger/)
+[![TODO](https://badgen.net/https/api.tickgit.com/badgen/github.com/Appegy/UniLogger)](https://www.tickgit.com/browse?repo=github.com/Appegy/UniLogger)
 
 Logging is an essential component of project diagnostics during development and testing. However, it comes with a drawback: the more logs you have, the more challenging it becomes to locate the specific ones you need at any given moment.
 
