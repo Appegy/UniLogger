@@ -5,7 +5,7 @@ namespace Appegy.UniLogger.Example
     public enum ExampleLogs
     {
         Tag1,
-        [LoggerTagName("RenamedTag2")]
+        [TagName("RenamedTag2")]
         Tag2,
     }
 
