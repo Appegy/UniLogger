@@ -144,12 +144,13 @@ namespace UnityEngine
             lock (_coloredCategories)
             {
                 if (_coloredCategories.TryGetValue(tag, out color)) return color;
+                
+                // TODO use System.Random to generate colors
                 var seed = tag.GetHashCode();
-                var rnd = new System.Random(seed);
-                var r = GetRandomNumberInRange(rnd, 0.5f, 0.97f);
-                var g = GetRandomNumberInRange(rnd, 0.5f, 0.97f);
-                var b = GetRandomNumberInRange(rnd, 0.5f, 0.97f);
-                color = new Color(r, g, b);
+                Random.InitState(seed);
+                
+                // TODO find convenient parameters for generating colors for both light and dark themes
+                color = Random.ColorHSV(0.4f, 0.6f, 1f, 1f, 0.5f, 1f);
                 _coloredCategories[tag] = color;
             }
             return color;
