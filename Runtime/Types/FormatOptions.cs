@@ -12,4 +12,12 @@ namespace UnityEngine
         Tags = 8,
         LogType = 16,
     }
+
+    public static class FormatOptionsExtensions
+    {
+        public static bool HasFlagFast(this FormatOptions value, FormatOptions flag)
+        {
+            return (value & flag) != 0;
+        }
+    }
 }
