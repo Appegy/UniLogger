@@ -26,6 +26,7 @@ namespace UnityEngine
                 var line = new LogEntry(_tags.Where(c => Data.UnityFilterer.IsAllowed(logLevel, c)), logLevel, message, color, context);
                 var formattedMessage = Data.UnityFormatter.Format(line);
 
+                // manually extract stack trace if stack it disabled by unity but some target needs it 
                 var manualStacktrace = string.Empty;
                 if (Application.GetStackTraceLogType(logLevel.ConvertToLogType()) == StackTraceLogType.None &&
                     Data.Targets.Any(c => WillBeAllowedByFilterer(c.Filterer, logLevel, _tags) && c.GetStackTraceEnabled(logLevel)))
@@ -50,11 +51,19 @@ namespace UnityEngine
             else
             {
                 var manualStacktrace = string.Empty;
-                if (Data.Targets.Any(c => WillBeAllowedByFilterer(c.Filterer, logLevel, _tags) && c.GetStackTraceEnabled(logLevel)))
+                var allowedByAnyFilterer = false;
+                foreach (var target in Data.Targets.Where(c => WillBeAllowedByFilterer(c.Filterer, logLevel, _tags)))
                 {
-                    manualStacktrace = StackTraceUtility.ExtractStackTrace();
+                    allowedByAnyFilterer = true;
+                    if (string.IsNullOrEmpty(manualStacktrace) && target.GetStackTraceEnabled(logLevel))
+                    {
+                        manualStacktrace = StackTraceUtility.ExtractStackTrace();
+                    }
                 }
-                BroadcastLog(Data, _tags, logLevel, message, manualStacktrace, color, context);
+                if (allowedByAnyFilterer)
+                {
+                    BroadcastLog(Data, _tags, logLevel, message, manualStacktrace, color, context);
+                }
             }
         }
 

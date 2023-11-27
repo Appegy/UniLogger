@@ -7,26 +7,23 @@ namespace UnityEngine
     {
         private static readonly Dictionary<string, Color> _coloredCategories = new Dictionary<string, Color>();
 
-        private readonly bool _anyFormat;
-        private readonly bool _richText;
-        private readonly bool _showTime;
-        private readonly bool _showThread;
-        private readonly bool _showTagName;
-        private readonly bool _showType;
+        public FormatOptions FormatOptions { get; set; }
+
+        private bool AnyFormat => FormatOptions != FormatOptions.None;
+        private bool RichText => FormatOptions.HasFlagFast(FormatOptions.RichText);
+        private bool ShowTime => FormatOptions.HasFlagFast(FormatOptions.Time);
+        private bool ShowThread => FormatOptions.HasFlagFast(FormatOptions.Thread);
+        private bool ShowTagName => FormatOptions.HasFlagFast(FormatOptions.Tags);
+        private bool ShowType => FormatOptions.HasFlagFast(FormatOptions.LogType);
 
         public Formatter(FormatOptions options = FormatOptions.None)
         {
-            _anyFormat = options != FormatOptions.None;
-            _richText = options.HasFlag(FormatOptions.RichText);
-            _showTime = options.HasFlag(FormatOptions.Time);
-            _showThread = options.HasFlag(FormatOptions.Thread);
-            _showTagName = options.HasFlag(FormatOptions.Tags);
-            _showType = options.HasFlag(FormatOptions.LogType);
+            FormatOptions = options;
         }
 
         public string Format(LogEntry line)
         {
-            if (!_anyFormat)
+            if (!AnyFormat)
             {
                 return line.String;
             }
@@ -51,8 +48,8 @@ namespace UnityEngine
 
         private void AppendTime(LogEntry line, StringBuilder builder)
         {
-            if (!_showTime) return;
-            if (_richText)
+            if (!ShowTime) return;
+            if (RichText)
             {
                 builder.Append("[<i><color=yellow>");
                 builder.Append(line.LogTime.ToString("HH:mm:ss:fff"));
@@ -68,8 +65,8 @@ namespace UnityEngine
 
         private void AppendType(LogEntry line, StringBuilder builder)
         {
-            if (!_showType) return;
-            if (_richText)
+            if (!ShowType) return;
+            if (RichText)
             {
                 builder.Append("[<b><color=");
                 builder.Append(line.LogLevel.ToMessageColor());
@@ -87,7 +84,7 @@ namespace UnityEngine
 
         private void AppendThread(LogEntry line, StringBuilder builder)
         {
-            if (!_showThread) return;
+            if (!ShowThread) return;
             builder.Append("[TH=");
             builder.Append(line.ThreadId);
             builder.Append("]");
@@ -95,11 +92,11 @@ namespace UnityEngine
 
         private void AppendTags(LogEntry line, StringBuilder builder)
         {
-            if (!_showTagName) return;
+            if (!ShowTagName) return;
 
             foreach (var tag in line.Tags)
             {
-                if (_richText)
+                if (RichText)
                 {
                     builder.Append("<color=#");
                     builder.Append(ColorUtility.ToHtmlStringRGBA(GetColor(tag)));
@@ -119,11 +116,11 @@ namespace UnityEngine
 
         private void AppendMessage(LogEntry line, StringBuilder builder)
         {
-            if (_anyFormat)
+            if (AnyFormat)
             {
                 builder.Append(' ');
             }
-            if (_richText && line.IsColored)
+            if (RichText && line.IsColored)
             {
                 builder.Append("<color=#");
                 builder.Append(ColorUtility.ToHtmlStringRGBA(line.Color));
@@ -144,13 +141,15 @@ namespace UnityEngine
             lock (_coloredCategories)
             {
                 if (_coloredCategories.TryGetValue(tag, out color)) return color;
-                
-                // TODO use System.Random to generate colors
                 var seed = tag.GetHashCode();
-                Random.InitState(seed);
-                
+                var rnd = new System.Random(seed);
+
                 // TODO find convenient parameters for generating colors for both light and dark themes
-                color = Random.ColorHSV(0.4f, 0.6f, 1f, 1f, 0.5f, 1f);
+                var h = GetRandomNumberInRange(rnd, 0.4f, 0.6f);
+                var s = GetRandomNumberInRange(rnd, 0.9f, 1.0f);
+                var v = GetRandomNumberInRange(rnd, 0.0f, 1.0f);
+
+                color = Color.HSVToRGB(h, s, v);
                 _coloredCategories[tag] = color;
             }
             return color;
@@ -158,7 +157,7 @@ namespace UnityEngine
 
         private static float GetRandomNumberInRange(System.Random rnd, float minNumber, float maxNumber)
         {
-            return (float)rnd.NextDouble() * (maxNumber - minNumber) + minNumber;
+            return (float)(rnd.NextDouble() * (maxNumber - minNumber) + minNumber);
         }
     }
 }
