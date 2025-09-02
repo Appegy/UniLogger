@@ -1,8 +1,8 @@
 {
   "name": "com.appegy.unilogger",
-  "displayName": "Appegy: UniLogger",
-  "description": "Simple and flexible but lightweight logger for Unity.",
-  "version": "1.0.0",
+  "displayName": "Appegy: Logger",
+  "description": "Simple flexible and lightweight logger for Unity.",
+  "version": "1.0.1",
   "unity": "2021.3",
   "documentationUrl": "https://github.com/Appegy/UniLogger",
   "changelogUrl": "https://github.com/Appegy/UniLogger/releases",

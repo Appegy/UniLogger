@@ -3,25 +3,35 @@ using static UnityEngine.LogLevelExtensions;
 
 namespace UnityEngine
 {
-    public abstract class Target
+    public abstract class TargetBase
     {
-        private readonly bool[] _stackTraceLogType;
-
         [NotNull]
         public Formatter Formatter { get; }
 
         [NotNull]
         public Filterer Filterer { get; }
 
+        protected TargetBase() : this(null, null)
+        {
+        }
+
+        protected TargetBase([CanBeNull] Formatter formatter = null, [CanBeNull] Filterer filterer = null)
+        {
+            Formatter = formatter ?? new Formatter();
+            Filterer = filterer ?? new Filterer(true);
+        }
+    }
+
+    public abstract class Target : TargetBase
+    {
+        private readonly bool[] _stackTraceLogType;
+
         protected Target() : this(null, null)
         {
         }
 
-        protected Target([CanBeNull] Formatter formatter = null, [CanBeNull] Filterer filterer = null)
+        protected Target([CanBeNull] Formatter formatter = null, [CanBeNull] Filterer filterer = null) : base(formatter, filterer)
         {
-            Formatter = formatter ?? new Formatter();
-            Filterer = filterer ?? new Filterer(true);
-
             _stackTraceLogType = new bool[LogTypes.Count];
             foreach (var logType in LogTypes)
             {
@@ -29,10 +39,9 @@ namespace UnityEngine
             }
         }
 
-        public Target SetStackTraceEnabled(LogLevel logLevel, bool enabled)
+        public void SetStackTraceEnabled(LogLevel logLevel, bool enabled)
         {
             _stackTraceLogType[(int)logLevel] = enabled;
-            return this;
         }
 
         public bool GetStackTraceEnabled(LogLevel logLevel)
@@ -40,9 +49,9 @@ namespace UnityEngine
             return _stackTraceLogType[(int)logLevel];
         }
 
-        public abstract void Log(string message, [CanBeNull] string stackTrace);
+        protected internal abstract void Log(string message, [CanBeNull] string stackTrace);
 
-        public virtual void Flush()
+        protected internal virtual void Flush()
         {
         }
     }

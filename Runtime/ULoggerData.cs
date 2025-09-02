@@ -4,9 +4,8 @@ namespace UnityEngine
 {
     internal class ULoggerData
     {
-        public List<Target> Targets { get; } = new List<Target>();
-        public Formatter UnityFormatter { get; set; }
-        public Filterer UnityFilterer { get; set; }
-        public UnityLogger LogHandler { get; set; }
+        public List<Target> Targets { get; } = new();
+        public UnityTarget UnityTarget { get; init; }
+        public UnityLogger LogHandler { get; init; }
     }
 }

@@ -21,14 +21,15 @@ namespace UnityEngine
             }
 
             // means it is possible to send log to Unity, catch using Application.logMessageReceivedThreaded and broadcast to other targets
-            if (WillBeAllowedByFilterer(Data.UnityFilterer, logLevel, _tags))
+            if (WillBeAllowedByFilterer(Data.UnityTarget.Filterer, logLevel, _tags))
             {
-                var line = new LogEntry(_tags.Where(c => Data.UnityFilterer.IsAllowed(logLevel, c)), logLevel, message, color, context);
-                var formattedMessage = Data.UnityFormatter.Format(line);
+                var line = new LogEntry(_tags.Where(c => Data.UnityTarget.Filterer.IsAllowed(logLevel, c)), logLevel, message, color, context);
+                var formattedMessage = Data.UnityTarget.Formatter.Format(line);
 
-                // manually extract stack trace if stack it disabled by unity but some target needs it 
+                // manually extract stack trace if stack it disabled by unity (or we are in separate thread) but some target needs it 
                 var manualStacktrace = string.Empty;
-                if (Application.GetStackTraceLogType(logLevel.ConvertToLogType()) == StackTraceLogType.None &&
+                if (!ThreadDispatcher.IsMainThread ||
+                    Application.GetStackTraceLogType(logLevel.ConvertToLogType()) == StackTraceLogType.None &&
                     Data.Targets.Any(c => WillBeAllowedByFilterer(c.Filterer, logLevel, _tags) && c.GetStackTraceEnabled(logLevel)))
                 {
                     manualStacktrace = StackTraceUtility.ExtractStackTrace();

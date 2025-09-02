@@ -35,17 +35,36 @@ namespace UnityEngine
 
         [CanBeNull]
         private static ULoggerData Data { get; set; }
-        
-        [CanBeNull]
-        public static List<Target> Targets => Data?.Targets;
+
+        public static IEnumerable<TargetBase> GetTargets()
+        {
+            if (Data == null) yield break;
+            yield return Data.UnityTarget;
+            foreach (var target in Data.Targets)
+            {
+                yield return target;
+            }
+        }
+
+        public static T GetTarget<T>() where T : TargetBase
+        {
+            if (Data == null) return null;
+            if (Data.UnityTarget is T unityTarget)
+            {
+                return unityTarget;
+            }
+            return Data.Targets.First(c => c is T) as T;
+        }
 
         public static void Initialize(Formatter unityFormatter = null, Filterer unityFilterer = null)
         {
             // prepare default loggers and swap unity logger to custom
+            unityFormatter ??= new Formatter();
+            unityFilterer ??= new Filterer(true);
+            var unityTarget = new UnityTarget(unityFormatter, unityFilterer);
             Data = new ULoggerData
             {
-                UnityFormatter = unityFormatter ?? new Formatter(),
-                UnityFilterer = unityFilterer ?? new Filterer(true),
+                UnityTarget = unityTarget,
                 LogHandler = new UnityLogger(Debug.unityLogger.logHandler),
             };
             Debug.unityLogger.logHandler = Data.LogHandler;
