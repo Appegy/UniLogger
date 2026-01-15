@@ -1,0 +1,16 @@
+{
+    "name": "Appegy.UniLogger.Configurator",
+    "rootNamespace": "Appegy.UniLogger",
+    "references": [
+        "GUID:101284a83d4eda94f85536ec01b22332"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

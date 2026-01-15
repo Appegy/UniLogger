@@ -59,6 +59,8 @@ I strongly discourage using `Debug.Log`, `Debug.LogWarning` and `Debug.LogError`
 
 ## Quick start
 
+Для быстрого начала использования `ULogger`'а достаточно создать в папаке Resources `ULoggerConfigurator` (Assets → Create → ULogger → Configurator). В этом ассете можно активировать встроенные таргеты а также настроить их форматеры. По умолчанию включен только `Unity Target`.
+
 First of all you have to initialize `ULogger`. To do this you should call the `ULogger.Initialize(Formatter, Filterer)` method. It's best to do this at the very start of your application, before any logs are generated, to ensure that nothing is missed. The most effective way to achieve this is by using a static method with the [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)](https://docs.unity3d.com/ScriptReference/RuntimeInitializeLoadType.SubsystemRegistration.html) attribute.
 
 During initialization, you will need to configure the Formatter and Filterer to be used for logs sent to the Unity console. You can learn how to [format](#logs-formatting) and [filter](#logs-filtering) logs in the respective sections.
