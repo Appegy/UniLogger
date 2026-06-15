@@ -15,8 +15,8 @@ jobs:
       - name: Cache Library
         uses: actions/cache@v4
         with:
-          path: Appegy.UniLogger.Environment~/Library
-          key: Library-Tests-${{ hashFiles('Appegy.UniLogger.Environment~/Assets/**', 'Appegy.UniLogger.Environment~/Packages/**', 'Appegy.UniLogger.Environment~/ProjectSettings/**', 'Runtime/**', 'Editor/**', 'Tests/**') }}
+          path: Library
+          key: Library-Tests-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
           restore-keys: |
             Library-Tests-
             Library-
@@ -29,7 +29,7 @@ jobs:
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
         with:
-          projectPath: Appegy.UniLogger.Environment~
+          projectPath: .
           unityVersion: auto
           testMode: EditMode
 
