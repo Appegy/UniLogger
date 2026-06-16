@@ -24,7 +24,7 @@ public static class ReserializeAssetsTool
         typeof(PluginImporter),
     };
 
-    [MenuItem("Appegy/Reserialize All (Package + Project)")]
+    [MenuItem("Appegy/Reserialize Assets")]
     public static void ReserializeAll()
     {
         var projectRoot = Path.GetFullPath(Directory.GetCurrentDirectory());
