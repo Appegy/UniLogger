@@ -48,7 +48,7 @@ Add package to the ```manifest.json```.
 
 ```json
 "dependencies": {
-  "com.appegy.unilogger": "https://github.com/appegy/unilogger.git",
+  "com.appegy.unilogger": "https://github.com/appegy/unilogger.git?path=/src",
   ...
 },
 ```
