@@ -24,7 +24,7 @@ public static class ReserializeAssetsTool
         typeof(PluginImporter),
     };
 
-    [MenuItem("Tools/Reserialize All (Package + Project)")]
+    [MenuItem("Appegy/Reserialize All (Package + Project)")]
     public static void ReserializeAll()
     {
         var projectRoot = Path.GetFullPath(Directory.GetCurrentDirectory());
@@ -95,14 +95,16 @@ public static class ReserializeAssetsTool
             return true;
         }
 
-        // Local (file:) packages may resolve outside the project - typically shared SDK
-        // submodules. Only include ones that resolve inside this repository.
+        // Local (file:) packages: include ones that resolve inside this repository (the repo
+        // root is the parent of the Unity project, e.g. <repo>/src next to <repo>/lab).
+        // Skip local packages resolving elsewhere (shared SDK submodules in another repo).
         if (info.source != PackageSource.Local)
         {
             return false;
         }
 
+        var repoRoot = Path.GetFullPath(Path.Combine(projectRoot, ".."));
         var resolved = Path.GetFullPath(info.resolvedPath);
-        return resolved.StartsWith(projectRoot, StringComparison.OrdinalIgnoreCase);
+        return resolved.StartsWith(repoRoot, StringComparison.OrdinalIgnoreCase);
     }
 }

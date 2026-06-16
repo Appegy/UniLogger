@@ -15,8 +15,8 @@ jobs:
       - name: Cache Library
         uses: actions/cache@v4
         with:
-          path: Library
-          key: Library-Tests-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
+          path: lab/Library
+          key: Library-Tests-${{ hashFiles('lab/Assets/**', 'lab/Packages/**', 'lab/ProjectSettings/**', 'src/**') }}
           restore-keys: |
             Library-Tests-
             Library-
@@ -29,7 +29,7 @@ jobs:
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
         with:
-          projectPath: .
+          projectPath: lab
           unityVersion: auto
           testMode: EditMode
 
