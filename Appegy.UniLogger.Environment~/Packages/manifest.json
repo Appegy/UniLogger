@@ -29,5 +29,8 @@
         "net.tnrd.nsubstitute"
       ]
     }
+  ],
+  "testables": [
+    "com.appegy.unilogger"
   ]
 }
