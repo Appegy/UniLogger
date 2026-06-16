@@ -1,0 +1,39 @@
+{
+    "name": "Appegy.UniLogger.Tests",
+    "rootNamespace": "Appegy.UniLogger",
+    "references": [
+        "Appegy.UniLogger",
+        "BoundfoxStudios.FluentAssertions"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll",
+        "NSubstitute.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "NSUBSTITUTE",
+        "FLUENT_ASSERTIONS"
+    ],
+    "versionDefines": [
+        {
+            "name": "net.tnrd.nsubstitute",
+            "expression": "",
+            "define": "NSUBSTITUTE"
+        },
+        {
+            "name": "com.boundfoxstudios.fluentassertions",
+            "expression": "",
+            "define": "FLUENT_ASSERTIONS"
+        }
+    ],
+    "noEngineReferences": false,
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ]
+}

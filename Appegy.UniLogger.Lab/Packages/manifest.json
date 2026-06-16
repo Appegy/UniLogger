@@ -1,0 +1,40 @@
+{
+  "dependencies": {
+    "com.appegy.unilogger": "file:../../src",
+    "com.boundfoxstudios.fluentassertions": "6.8.0",
+    "com.dbrizov.naughtyattributes": "2.1.4",
+    "com.unity.2d.sprite": "1.0.0",
+    "com.unity.ai.navigation": "2.0.12",
+    "com.unity.ide.rider": "3.0.40",
+    "com.unity.mobile.android-logcat": "1.4.7",
+    "com.unity.multiplayer.center": "1.0.1",
+    "com.unity.test-framework": "1.6.0",
+    "com.unity.ugui": "2.0.0",
+    "com.yasirkula.ingamedebugconsole": "https://github.com/yasirkula/UnityIngameDebugConsole.git",
+    "net.tnrd.nsubstitute": "4.4.0",
+    "com.unity.modules.accessibility": "1.0.0",
+    "com.unity.modules.adaptiveperformance": "1.0.0",
+    "com.unity.modules.androidjni": "1.0.0",
+    "com.unity.modules.animation": "1.0.0",
+    "com.unity.modules.audio": "1.0.0",
+    "com.unity.modules.imgui": "1.0.0",
+    "com.unity.modules.jsonserialize": "1.0.0",
+    "com.unity.modules.ui": "1.0.0",
+    "com.unity.modules.vectorgraphics": "1.0.0"
+  },
+  "scopedRegistries": [
+    {
+      "name": "package.openupm.com",
+      "url": "https://package.openupm.com",
+      "scopes": [
+        "com.dbrizov.naughtyattributes",
+        "com.boundfoxstudios.fluentassertions",
+        "com.openupm",
+        "net.tnrd.nsubstitute"
+      ]
+    }
+  ],
+  "testables": [
+    "com.appegy.unilogger"
+  ]
+}
