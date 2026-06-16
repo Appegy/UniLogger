@@ -1,0 +1,81 @@
+# Manual signed release: packs src/ into a .tgz, signs it with the Unity UPM CLI, tags the
+# version, and publishes a GitHub Release with auto-generated notes.
+# Version comes from src/package.json (model A) - bump it first (bump-version.yml) to cut a new one.
+# Secrets required: UPM_SERVICE_ACCOUNT_KEY_ID / UPM_SERVICE_ACCOUNT_KEY_SECRET / UPM_ORG_ID.
+
+name: Release
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Pack, sign and release
+    runs-on: ubuntu-latest
+    env:
+      UPM_SERVICE_ACCOUNT_KEY_ID: ${{ secrets.UPM_SERVICE_ACCOUNT_KEY_ID }}
+      UPM_SERVICE_ACCOUNT_KEY_SECRET: ${{ secrets.UPM_SERVICE_ACCOUNT_KEY_SECRET }}
+      UPM_ORG_ID: ${{ secrets.UPM_ORG_ID }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Read package version
+        id: pkg
+        run: |
+          VERSION="$(jq -r .version src/package.json)"
+          if [ -z "$VERSION" ] || [ "$VERSION" = "null" ]; then
+            echo "No version found in src/package.json"; exit 1
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Releasing v$VERSION"
+
+      - name: Ensure tag does not already exist
+        run: |
+          if git ls-remote --exit-code --tags origin "refs/tags/${{ steps.pkg.outputs.tag }}" >/dev/null 2>&1; then
+            echo "Tag ${{ steps.pkg.outputs.tag }} already exists - bump the version before releasing."
+            exit 1
+          fi
+
+      - name: Stage package contents
+        run: |
+          rm -rf pack out && mkdir -p pack out
+          cp -R src/. pack/
+          # README/LICENSE live at the repo root - fold them into the package.
+          for f in README.md LICENSE; do
+            [ -f "$f" ] && cp "$f" pack/
+          done
+
+      - name: Install Unity UPM CLI
+        run: |
+          curl -fsSL https://cdn.packages.unity.com/upm-cli/install.sh -o install.sh
+          bash install.sh
+          echo "$HOME/.upm/bin" >> "$GITHUB_PATH"
+
+      - name: Pack and sign
+        id: pack
+        run: |
+          upm pack ./pack --organization-id "$UPM_ORG_ID" --destination out
+          TGZ="$(ls out/*.tgz out/*.tar.gz 2>/dev/null | head -1)"
+          [ -n "$TGZ" ] || { echo "No archive produced by upm pack"; exit 1; }
+          tar -tzf "$TGZ" | grep -qx 'package/package.json'        || { echo "Malformed package"; exit 1; }
+          tar -tzf "$TGZ" | grep -qx 'package/.attestation.p7m'    || { echo "No .attestation.p7m - package is NOT signed"; exit 1; }
+          echo "tgz=$TGZ" >> "$GITHUB_OUTPUT"
+          echo "Signed $TGZ - contents:"; tar -tzf "$TGZ"
+
+      - name: Create and push tag
+        run: |
+          git tag "${{ steps.pkg.outputs.tag }}"
+          git push origin "${{ steps.pkg.outputs.tag }}"
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ steps.pkg.outputs.tag }}" "${{ steps.pack.outputs.tgz }}" \
+            --title "${{ steps.pkg.outputs.tag }}" \
+            --generate-notes
