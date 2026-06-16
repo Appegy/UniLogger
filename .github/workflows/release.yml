@@ -49,6 +49,33 @@ jobs:
           for f in README.md LICENSE; do
             [ -f "$f" ] && cp "$f" pack/
           done
+          # README references images/ with relative paths - ship them so it renders in Package Manager.
+          [ -d images ] && cp -R images pack/
+
+      - name: Generate missing .meta files
+        run: |
+          # Unity ignores package assets that lack a .meta. src/ ships its own; the root-folded
+          # README/LICENSE/images do not, so synthesize deterministic ones (guid = md5 of the
+          # package-relative path, stable across releases). Files Unity has no importer for (.webp,
+          # extensionless LICENSE) get a DefaultImporter meta and ship as generic assets - enough to
+          # silence the warning while the Package Manager README renderer still reads them directly.
+          cd pack
+          find . -mindepth 1 \( -type f -o -type d \) ! -name '*.meta' | while read -r p; do
+            [ -e "$p.meta" ] && continue
+            rel="${p#./}"
+            guid="$(printf '%s' "$rel" | md5sum | cut -c1-32)"
+            {
+              echo "fileFormatVersion: 2"
+              echo "guid: $guid"
+              [ -d "$p" ] && echo "folderAsset: yes"
+              echo "DefaultImporter:"
+              echo "  externalObjects: {}"
+              echo "  userData: "
+              echo "  assetBundleName: "
+              echo "  assetBundleVariant: "
+            } > "$p.meta"
+            echo "generated meta: $rel"
+          done
 
       - name: Install Unity UPM CLI
         run: |
@@ -62,6 +89,7 @@ jobs:
           upm pack ./pack --organization-id "$UPM_ORG_ID" --destination out
           TGZ="$(ls out/*.tgz out/*.tar.gz 2>/dev/null | head -1)"
           [ -n "$TGZ" ] || { echo "No archive produced by upm pack"; exit 1; }
+          # fail loudly if the package isn't actually signed
           tar -tzf "$TGZ" | grep -qx 'package/package.json'        || { echo "Malformed package"; exit 1; }
           tar -tzf "$TGZ" | grep -qx 'package/.attestation.p7m'    || { echo "No .attestation.p7m - package is NOT signed"; exit 1; }
           echo "tgz=$TGZ" >> "$GITHUB_OUTPUT"
