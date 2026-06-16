@@ -1,0 +1,20 @@
+{
+  "name": "com.appegy.unilogger",
+  "displayName": "Appegy: Logger",
+  "description": "Simple flexible and lightweight logger for Unity.",
+  "version": "1.0.1",
+  "unity": "6000.0",
+  "documentationUrl": "https://github.com/Appegy/UniLogger",
+  "changelogUrl": "https://github.com/Appegy/UniLogger/releases",
+  "license": "MIT",
+  "keywords": [
+    "Log",
+    "Logger",
+    "Logging"
+  ],
+  "author": {
+    "name": "Appegy",
+    "email": "imurashka.me@gmail.com",
+    "url": "https://github.com/Appegy"
+  }
+}
