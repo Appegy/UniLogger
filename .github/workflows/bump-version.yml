@@ -1,11 +1,4 @@
-# Manual version bump: pick a bump type, the new version is computed from the current one
-# (always valid semver, strictly greater, can't jump). Sets the version in every place it
-# lives and opens a PR - main is protected, so no direct pushes. Merge the PR, then run
-# Release (model A: release.yml tags whatever version is on main). The commit is authored
-# by whoever triggers the workflow.
-
 name: Bump version
-
 on:
   workflow_dispatch:
     inputs:
@@ -17,40 +10,9 @@ on:
           - minor
           - major
         default: patch
-
-permissions:
-  contents: write
-  pull-requests: write
-
 jobs:
   bump:
-    name: Bump version
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v5
-
-      - name: Bump and sync version
-        id: bump
-        run: |
-          ( cd src && npm version "${{ inputs.type }}" --no-git-tag-version >/dev/null )
-          NEW="$(jq -r .version src/package.json)"
-          echo "Bumped to $NEW"
-          sed -i -E "s/(public const string Version = \")[^\"]*(\";)/\1$NEW\2/" src/Runtime/PackageInfo.cs
-          sed -i -E "s/^(  bundleVersion: ).*/\1$NEW/" "Appegy.UniLogger.Lab/ProjectSettings/ProjectSettings.asset"
-          echo "version=$NEW" >> "$GITHUB_OUTPUT"
-
-      - name: Open version-bump PR (authored by whoever ran this)
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          NEW="${{ steps.bump.outputs.version }}"
-          BRANCH="bump/v$NEW"
-          git config user.name "${{ github.actor }}"
-          git config user.email "${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com"
-          git switch -c "$BRANCH"
-          git commit -am "Bump version to $NEW"
-          git push -u origin "$BRANCH"
-          gh pr create --base main --head "$BRANCH" \
-            --title "Bump version to $NEW" \
-            --body "Sets the package version to \`$NEW\` in src/package.json, src/Runtime/PackageInfo.cs, and the dev project's bundleVersion. Merge, then run Release."
+    uses: Appegy/upm-ci/.github/workflows/bump-version.yml@v1
+    with:
+      type: ${{ inputs.type }}
+    secrets: inherit
