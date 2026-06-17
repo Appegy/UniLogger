@@ -7,6 +7,6 @@ namespace Appegy.UniLogger
     public static class PackageInfo
     {
         public const string Name = "com.appegy.unilogger";
-        public const string Version = "1.0.3";
+        public const string Version = "1.0.4";
     }
 }

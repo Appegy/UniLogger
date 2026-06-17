@@ -2,7 +2,7 @@
   "name": "com.appegy.unilogger",
   "displayName": "Appegy: Logger",
   "description": "Simple flexible and lightweight logger for Unity.",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "unity": "6000.0",
   "documentationUrl": "https://github.com/Appegy/UniLogger",
   "changelogUrl": "https://github.com/Appegy/UniLogger/releases",
