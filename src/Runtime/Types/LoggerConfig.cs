@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using UnityEngine;
 
-namespace UnityEngine
+namespace Appegy.UniLogger
 {
     public class LoggerConfig
     {

@@ -1,7 +1,7 @@
 ﻿using System.Collections.Concurrent;
 using System.Text;
 
-namespace UnityEngine
+namespace Appegy.UniLogger
 {
     internal static class StringBuilderPool
     {

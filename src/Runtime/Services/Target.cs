@@ -1,7 +1,7 @@
 ﻿using JetBrains.Annotations;
-using static UnityEngine.LogLevelExtensions;
+using static Appegy.UniLogger.LogLevelExtensions;
 
-namespace UnityEngine
+namespace Appegy.UniLogger
 {
     public abstract class TargetBase
     {

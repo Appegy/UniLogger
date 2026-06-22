@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
+using UnityEngine;
 
-namespace UnityEngine
+namespace Appegy.UniLogger
 {
     internal class ULoggerData
     {

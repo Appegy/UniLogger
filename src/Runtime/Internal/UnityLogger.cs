@@ -13,6 +13,7 @@
 #endif
 
 using System;
+using Appegy.UniLogger;
 
 namespace UnityEngine
 {

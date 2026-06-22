@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace UnityEngine
+namespace Appegy.UniLogger
 {
     internal static class TagsHelper
     {

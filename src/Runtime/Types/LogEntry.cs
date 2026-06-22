@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using UnityEngine;
+using Object = UnityEngine.Object;
 
-namespace UnityEngine
+namespace Appegy.UniLogger
 {
     public readonly struct LogEntry
     {

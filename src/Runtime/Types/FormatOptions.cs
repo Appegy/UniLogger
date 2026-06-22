@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace UnityEngine
+namespace Appegy.UniLogger
 {
     [Flags]
     public enum FormatOptions

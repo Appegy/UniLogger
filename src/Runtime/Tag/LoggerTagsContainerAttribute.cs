@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace UnityEngine
+namespace Appegy.UniLogger
 {
     [AttributeUsage(AttributeTargets.Enum)]
     public class LoggerTagsContainerAttribute : Attribute

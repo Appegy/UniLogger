@@ -1,6 +1,6 @@
 using JetBrains.Annotations;
 
-namespace UnityEngine
+namespace Appegy.UniLogger
 {
     public class UnityTarget : TargetBase
     {
