@@ -94,10 +94,11 @@ namespace Appegy.UniLogger
             }
         }
 
+        [HideInCallstack]
         private static void OnUnobservedTaskException(object sender, UnobservedTaskExceptionEventArgs e)
         {
             if (Data == null) return;
-            Data.LogHandler.Default.LogException(e.Exception);
+            Data.LogHandler.Default.LogException(e.Exception.InnerException ?? e.Exception);
             Flush();
         }
 
