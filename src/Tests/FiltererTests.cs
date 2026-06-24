@@ -2,7 +2,7 @@ using FluentAssertions;
 using NUnit.Framework;
 using UnityEngine;
 
-namespace Appegy.UniLogger.Tests
+namespace Appegy.UniLogger
 {
     public class FiltererTests
     {
