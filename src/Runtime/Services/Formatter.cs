@@ -1,7 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Text;
+using UnityEngine;
 
-namespace UnityEngine
+namespace Appegy.UniLogger
 {
     public class Formatter
     {

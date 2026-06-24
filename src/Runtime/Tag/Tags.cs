@@ -1,4 +1,4 @@
-﻿namespace UnityEngine
+﻿namespace Appegy.UniLogger
 {
     internal static class Tags
     {

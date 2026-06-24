@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
-using static UnityEngine.LogLevelExtensions;
+using static Appegy.UniLogger.LogLevelExtensions;
 
-namespace UnityEngine
+namespace Appegy.UniLogger
 {
     public class Filterer
     {

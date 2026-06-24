@@ -1,4 +1,4 @@
-﻿#define ULOGGER_TRACE_ON
+#define ULOGGER_TRACE_ON
 #define ULOGGER_LOGS_ON
 #define ULOGGER_WARNINGS_ON
 #define ULOGGER_ERRORS_ON
@@ -17,8 +17,10 @@
 #endif
 
 using System;
+using UnityEngine;
+using Object = UnityEngine.Object;
 
-namespace UnityEngine
+namespace Appegy.UniLogger
 {
     public static class ExtendedULogger
     {
@@ -27,6 +29,7 @@ namespace UnityEngine
 #if !ULOGGER_TRACE_ON
         [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
 #endif
+        [HideInCallstack]
         public static void Trace(this ULogger logger, string message)
         {
             logger.Trace(message, default, null);
@@ -35,6 +38,7 @@ namespace UnityEngine
 #if !ULOGGER_TRACE_ON
         [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
 #endif
+        [HideInCallstack]
         public static void Trace(this ULogger logger, string message, Color color)
         {
             logger.Trace(message, color, null);
@@ -43,6 +47,7 @@ namespace UnityEngine
 #if !ULOGGER_TRACE_ON
         [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
 #endif
+        [HideInCallstack]
         public static void Trace(this ULogger logger, string message, Object context)
         {
             logger.Trace(message, default, context);
@@ -51,6 +56,7 @@ namespace UnityEngine
 #if !ULOGGER_TRACE_ON
         [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
 #endif
+        [HideInCallstack]
         public static void Trace(this ULogger logger, string message, Color color, Object context)
         {
             logger.SendLogToUnity(LogLevel.Trace, message, color, context);
@@ -63,6 +69,7 @@ namespace UnityEngine
 #if !ULOGGER_LOGS_ON
         [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
 #endif
+        [HideInCallstack]
         public static void Log(this ULogger logger, string message)
         {
             logger.Log(message, default, null);
@@ -71,6 +78,7 @@ namespace UnityEngine
 #if !ULOGGER_LOGS_ON
         [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
 #endif
+        [HideInCallstack]
         public static void Log(this ULogger logger, string message, Color color)
         {
             logger.Log(message, color, null);
@@ -79,6 +87,7 @@ namespace UnityEngine
 #if !ULOGGER_LOGS_ON
         [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
 #endif
+        [HideInCallstack]
         public static void Log(this ULogger logger, string message, Object context)
         {
             logger.Log(message, default, context);
@@ -87,6 +96,7 @@ namespace UnityEngine
 #if !ULOGGER_LOGS_ON
         [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
 #endif
+        [HideInCallstack]
         public static void Log(this ULogger logger, string message, Color color, Object context)
         {
             logger.SendLogToUnity(LogLevel.Log, message, color, context);
@@ -99,6 +109,7 @@ namespace UnityEngine
 #if !ULOGGER_WARNINGS_ON
         [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
 #endif
+        [HideInCallstack]
         public static void LogWarning(this ULogger logger, string message)
         {
             logger.LogWarning(message, default, null);
@@ -107,6 +118,7 @@ namespace UnityEngine
 #if !ULOGGER_WARNINGS_ON
         [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
 #endif
+        [HideInCallstack]
         public static void LogWarning(this ULogger logger, string message, Color color)
         {
             logger.LogWarning(message, color, null);
@@ -115,6 +127,7 @@ namespace UnityEngine
 #if !ULOGGER_WARNINGS_ON
         [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
 #endif
+        [HideInCallstack]
         public static void LogWarning(this ULogger logger, string message, Object context)
         {
             logger.LogWarning(message, default, context);
@@ -123,6 +136,7 @@ namespace UnityEngine
 #if !ULOGGER_WARNINGS_ON
         [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
 #endif
+        [HideInCallstack]
         public static void LogWarning(this ULogger logger, string message, Color color, Object context)
         {
             logger.SendLogToUnity(LogLevel.Warning, message, color, context);
@@ -135,6 +149,7 @@ namespace UnityEngine
 #if !ULOGGER_ERRORS_ON
         [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
 #endif
+        [HideInCallstack]
         public static void LogError(this ULogger logger, string message)
         {
             logger.LogError(message, default, null);
@@ -143,6 +158,7 @@ namespace UnityEngine
 #if !ULOGGER_ERRORS_ON
         [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
 #endif
+        [HideInCallstack]
         public static void LogError(this ULogger logger, string message, Color color)
         {
             logger.LogError(message, color, null);
@@ -151,6 +167,7 @@ namespace UnityEngine
 #if !ULOGGER_ERRORS_ON
         [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
 #endif
+        [HideInCallstack]
         public static void LogError(this ULogger logger, string message, Object context)
         {
             logger.LogError(message, default, context);
@@ -159,6 +176,7 @@ namespace UnityEngine
 #if !ULOGGER_ERRORS_ON
         [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
 #endif
+        [HideInCallstack]
         public static void LogError(this ULogger logger, string message, Color color, Object context)
         {
             logger.SendLogToUnity(LogLevel.Error, message, color, context);
@@ -166,6 +184,7 @@ namespace UnityEngine
 
         #endregion
 
+        [HideInCallstack]
         public static void LogException(this ULogger logger, Exception exception, Object context = null)
         {
             ULogger.LogException(exception, context);

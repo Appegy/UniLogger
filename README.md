@@ -26,7 +26,6 @@ All of these issues are addressed by ULogger.
 - [Logs formatting](#logs-formatting)
 - [Logs targets](#logs-targets)
 - [Removing logs from release builds](#removing-logs-from-release-builds)
-- [Why do I use UnityEngine namespace](#why-do-i-use-unityengine-namespace)
 
 ## Package installation
 
@@ -183,9 +182,5 @@ TODO
 TODO
 
 ## Removing logs from release builds
-
-TODO
-
-## Why do I use UnityEngine namespace
 
 TODO

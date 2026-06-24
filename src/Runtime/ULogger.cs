@@ -1,7 +1,8 @@
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
 
-namespace UnityEngine
+namespace Appegy.UniLogger
 {
     public partial class ULogger
     {
@@ -12,6 +13,7 @@ namespace UnityEngine
             _tags = tags.Distinct().OrderBy(c => c).ToList();
         }
 
+        [HideInCallstack]
         internal void SendLogToUnity(LogLevel logLevel, string message, Color color, Object context)
         {
             if (Data == null)

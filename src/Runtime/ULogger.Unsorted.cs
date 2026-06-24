@@ -17,8 +17,10 @@
 #endif
 
 using System;
+using UnityEngine;
+using Object = UnityEngine.Object;
 
-namespace UnityEngine
+namespace Appegy.UniLogger
 {
     public partial class ULogger
     {
@@ -27,6 +29,7 @@ namespace UnityEngine
 #if !ULOGGER_TRACE_ON
         [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
 #endif
+        [HideInCallstack]
         public static void Trace<TLoggerTag>(TLoggerTag enumValue, string message)
             where TLoggerTag : struct, Enum
         {
@@ -36,6 +39,7 @@ namespace UnityEngine
 #if !ULOGGER_TRACE_ON
         [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
 #endif
+        [HideInCallstack]
         public static void Trace<TLoggerTag>(TLoggerTag enumValue, string message, Color color)
             where TLoggerTag : struct, Enum
         {
@@ -45,6 +49,7 @@ namespace UnityEngine
 #if !ULOGGER_TRACE_ON
         [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
 #endif
+        [HideInCallstack]
         public static void Trace<TLoggerTag>(TLoggerTag enumValue, string message, Object context)
             where TLoggerTag : struct, Enum
         {
@@ -54,6 +59,7 @@ namespace UnityEngine
 #if !ULOGGER_TRACE_ON
         [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
 #endif
+        [HideInCallstack]
         public static void Trace<TLoggerTag>(TLoggerTag enumValue, string message, Color color, Object context)
             where TLoggerTag : struct, Enum
         {
@@ -63,6 +69,7 @@ namespace UnityEngine
 #if !ULOGGER_TRACE_ON
         [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
 #endif
+        [HideInCallstack]
         public static void Trace(string message)
         {
             _unsortedLogger.Trace(message);
@@ -71,6 +78,7 @@ namespace UnityEngine
 #if !ULOGGER_TRACE_ON
         [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
 #endif
+        [HideInCallstack]
         public static void Trace(string message, Color color)
         {
             _unsortedLogger.Trace(message, color);
@@ -79,6 +87,7 @@ namespace UnityEngine
 #if !ULOGGER_TRACE_ON
         [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
 #endif
+        [HideInCallstack]
         public static void Trace(string message, Object context)
         {
             _unsortedLogger.Trace(message, context);
@@ -87,6 +96,7 @@ namespace UnityEngine
 #if !ULOGGER_TRACE_ON
         [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
 #endif
+        [HideInCallstack]
         public static void Trace(string message, Color color, Object context)
         {
             _unsortedLogger.Trace(message, color, context);
@@ -99,6 +109,7 @@ namespace UnityEngine
 #if !ULOGGER_LOGS_ON
         [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
 #endif
+        [HideInCallstack]
         public static void Log<TLoggerTag>(TLoggerTag enumValue, string message)
             where TLoggerTag : struct, Enum
         {
@@ -108,6 +119,7 @@ namespace UnityEngine
 #if !ULOGGER_LOGS_ON
         [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
 #endif
+        [HideInCallstack]
         public static void Log<TLoggerTag>(TLoggerTag enumValue, string message, Color color)
             where TLoggerTag : struct, Enum
         {
@@ -117,6 +129,7 @@ namespace UnityEngine
 #if !ULOGGER_LOGS_ON
         [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
 #endif
+        [HideInCallstack]
         public static void Log<TLoggerTag>(TLoggerTag enumValue, string message, Object context)
             where TLoggerTag : struct, Enum
         {
@@ -126,6 +139,7 @@ namespace UnityEngine
 #if !ULOGGER_LOGS_ON
         [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
 #endif
+        [HideInCallstack]
         public static void Log<TLoggerTag>(TLoggerTag enumValue, string message, Color color, Object context)
             where TLoggerTag : struct, Enum
         {
@@ -135,6 +149,7 @@ namespace UnityEngine
 #if !ULOGGER_LOGS_ON
         [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
 #endif
+        [HideInCallstack]
         public static void Log(string message)
         {
             _unsortedLogger.Log(message);
@@ -143,6 +158,7 @@ namespace UnityEngine
 #if !ULOGGER_LOGS_ON
         [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
 #endif
+        [HideInCallstack]
         public static void Log(string message, Color color)
         {
             _unsortedLogger.Log(message, color);
@@ -151,6 +167,7 @@ namespace UnityEngine
 #if !ULOGGER_LOGS_ON
         [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
 #endif
+        [HideInCallstack]
         public static void Log(string message, Object context)
         {
             _unsortedLogger.Log(message, context);
@@ -159,6 +176,7 @@ namespace UnityEngine
 #if !ULOGGER_LOGS_ON
         [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
 #endif
+        [HideInCallstack]
         public static void Log(string message, Color color, Object context)
         {
             _unsortedLogger.Log(message, color, context);
@@ -171,6 +189,7 @@ namespace UnityEngine
 #if !ULOGGER_WARNINGS_ON
         [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
 #endif
+        [HideInCallstack]
         public static void LogWarning<TLoggerTag>(TLoggerTag enumValue, string message)
             where TLoggerTag : struct, Enum
         {
@@ -180,6 +199,7 @@ namespace UnityEngine
 #if !ULOGGER_WARNINGS_ON
         [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
 #endif
+        [HideInCallstack]
         public static void LogWarning<TLoggerTag>(TLoggerTag enumValue, string message, Color color)
             where TLoggerTag : struct, Enum
         {
@@ -189,6 +209,7 @@ namespace UnityEngine
 #if !ULOGGER_WARNINGS_ON
         [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
 #endif
+        [HideInCallstack]
         public static void LogWarning<TLoggerTag>(TLoggerTag enumValue, string message, Object context)
             where TLoggerTag : struct, Enum
         {
@@ -198,6 +219,7 @@ namespace UnityEngine
 #if !ULOGGER_WARNINGS_ON
         [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
 #endif
+        [HideInCallstack]
         public static void LogWarning<TLoggerTag>(TLoggerTag enumValue, string message, Color color, Object context)
             where TLoggerTag : struct, Enum
         {
@@ -207,6 +229,7 @@ namespace UnityEngine
 #if !ULOGGER_WARNINGS_ON
         [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
 #endif
+        [HideInCallstack]
         public static void LogWarning(string message)
         {
             _unsortedLogger.LogWarning(message);
@@ -215,6 +238,7 @@ namespace UnityEngine
 #if !ULOGGER_WARNINGS_ON
         [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
 #endif
+        [HideInCallstack]
         public static void LogWarning(string message, Color color)
         {
             _unsortedLogger.LogWarning(message, color);
@@ -223,6 +247,7 @@ namespace UnityEngine
 #if !ULOGGER_WARNINGS_ON
         [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
 #endif
+        [HideInCallstack]
         public static void LogWarning(string message, Object context)
         {
             _unsortedLogger.LogWarning(message, context);
@@ -231,6 +256,7 @@ namespace UnityEngine
 #if !ULOGGER_WARNINGS_ON
         [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
 #endif
+        [HideInCallstack]
         public static void LogWarning(string message, Color color, Object context)
         {
             _unsortedLogger.LogWarning(message, color, context);
@@ -243,6 +269,7 @@ namespace UnityEngine
 #if !ULOGGER_ERRORS_ON
         [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
 #endif
+        [HideInCallstack]
         public static void LogError<TLoggerTag>(TLoggerTag enumValue, string message)
             where TLoggerTag : struct, Enum
         {
@@ -252,6 +279,7 @@ namespace UnityEngine
 #if !ULOGGER_ERRORS_ON
         [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
 #endif
+        [HideInCallstack]
         public static void LogError<TLoggerTag>(TLoggerTag enumValue, string message, Color color)
             where TLoggerTag : struct, Enum
         {
@@ -261,6 +289,7 @@ namespace UnityEngine
 #if !ULOGGER_ERRORS_ON
         [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
 #endif
+        [HideInCallstack]
         public static void LogError<TLoggerTag>(TLoggerTag enumValue, string message, Object context)
             where TLoggerTag : struct, Enum
         {
@@ -270,6 +299,7 @@ namespace UnityEngine
 #if !ULOGGER_ERRORS_ON
         [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
 #endif
+        [HideInCallstack]
         public static void LogError<TLoggerTag>(TLoggerTag enumValue, string message, Color color, Object context)
             where TLoggerTag : struct, Enum
         {
@@ -279,6 +309,7 @@ namespace UnityEngine
 #if !ULOGGER_ERRORS_ON
         [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
 #endif
+        [HideInCallstack]
         public static void LogError(string message)
         {
             _unsortedLogger.LogError(message);
@@ -287,6 +318,7 @@ namespace UnityEngine
 #if !ULOGGER_ERRORS_ON
         [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
 #endif
+        [HideInCallstack]
         public static void LogError(string message, Color color)
         {
             _unsortedLogger.LogError(message, color);
@@ -295,6 +327,7 @@ namespace UnityEngine
 #if !ULOGGER_ERRORS_ON
         [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
 #endif
+        [HideInCallstack]
         public static void LogError(string message, Object context)
         {
             _unsortedLogger.LogError(message, context);
@@ -303,6 +336,7 @@ namespace UnityEngine
 #if !ULOGGER_ERRORS_ON
         [System.Diagnostics.Conditional("ULOGGER_INTERNAL_FALSE")]
 #endif
+        [HideInCallstack]
         public static void LogError(string message, Color color, Object context)
         {
             _unsortedLogger.LogError(message, color, context);
@@ -312,6 +346,7 @@ namespace UnityEngine
 
         #region LogException
 
+        [HideInCallstack]
         public static void LogException(Exception exception, Object context = null)
         {
             if (Data != null)

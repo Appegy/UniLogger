@@ -21,8 +21,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
+using UnityEngine;
 
-namespace UnityEngine
+namespace Appegy.UniLogger
 {
     public partial class ULogger
     {
@@ -93,10 +94,11 @@ namespace UnityEngine
             }
         }
 
+        [HideInCallstack]
         private static void OnUnobservedTaskException(object sender, UnobservedTaskExceptionEventArgs e)
         {
             if (Data == null) return;
-            Data.LogHandler.Default.LogException(e.Exception);
+            Data.LogHandler.Default.LogException(e.Exception.InnerException ?? e.Exception);
             Flush();
         }
 

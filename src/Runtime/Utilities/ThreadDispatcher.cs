@@ -1,6 +1,7 @@
 ﻿using System.Threading;
+using UnityEngine;
 
-namespace UnityEngine
+namespace Appegy.UniLogger
 {
     internal static class ThreadDispatcher
     {
