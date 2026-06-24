@@ -6,7 +6,10 @@ namespace Appegy.UniLogger
 {
     public class Formatter
     {
-        private static readonly Dictionary<string, Color> _coloredCategories = new Dictionary<string, Color>();
+        private const float TagColorSaturation = 0.7f;
+        private const float TagColorValue = 0.8f;
+
+        private static readonly Dictionary<string, string> _tagColorHex = new Dictionary<string, string>();
 
         public FormatOptions FormatOptions { get; set; }
 
@@ -100,9 +103,7 @@ namespace Appegy.UniLogger
                 var tag = line.Tags[i];
                 if (RichText)
                 {
-                    builder.Append("<color=#");
-                    builder.Append(ColorUtility.ToHtmlStringRGBA(GetColor(tag)));
-                    builder.Append(">");
+                    AppendTagColorOpenTag(builder, tag);
                     builder.Append("[");
                     builder.Append(tag);
                     builder.Append("]</color>");
@@ -136,30 +137,39 @@ namespace Appegy.UniLogger
             }
         }
 
-        private static Color GetColor(string tag)
+        private static void AppendTagColorOpenTag(StringBuilder builder, string tag)
         {
-            // TODO Create Tag class with Name and Color and cache Color on logger creation
-            Color color;
-            lock (_coloredCategories)
-            {
-                if (_coloredCategories.TryGetValue(tag, out color)) return color;
-                var seed = tag.GetHashCode();
-                var rnd = new System.Random(seed);
-
-                // TODO find convenient parameters for generating colors for both light and dark themes
-                var h = GetRandomNumberInRange(rnd, 0.4f, 0.6f);
-                var s = GetRandomNumberInRange(rnd, 0.9f, 1.0f);
-                var v = GetRandomNumberInRange(rnd, 0.0f, 1.0f);
-
-                color = Color.HSVToRGB(h, s, v);
-                _coloredCategories[tag] = color;
-            }
-            return color;
+            builder.Append("<color=#");
+            builder.Append(GetTagColorHex(tag));
+            builder.Append(">");
         }
 
-        private static float GetRandomNumberInRange(System.Random rnd, float minNumber, float maxNumber)
+        private static string GetTagColorHex(string tag)
         {
-            return (float)(rnd.NextDouble() * (maxNumber - minNumber) + minNumber);
+            lock (_tagColorHex)
+            {
+                if (_tagColorHex.TryGetValue(tag, out var hex)) return hex;
+
+                var hue = (StableHash(tag) & 0xFFFFFF) / (float)0x1000000;
+                var color = Color.HSVToRGB(hue, TagColorSaturation, TagColorValue);
+                hex = ColorUtility.ToHtmlStringRGBA(color);
+
+                _tagColorHex[tag] = hex;
+                return hex;
+            }
+        }
+
+        private static uint StableHash(string tag)
+        {
+            const uint offsetBasis = 2166136261;
+            const uint prime = 16777619;
+            var hash = offsetBasis;
+            for (var i = 0; i < tag.Length; i++)
+            {
+                hash ^= tag[i];
+                hash *= prime;
+            }
+            return hash;
         }
     }
 }
