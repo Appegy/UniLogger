@@ -37,18 +37,20 @@ namespace Appegy.UniLogger
                     manualStacktrace = StackTraceUtility.ExtractStackTrace();
                 }
 
-                _logsHandler = onLogReceived;
-                Data.LogHandler.Default.Log(logLevel.ConvertToLogType(), (object)formattedMessage, context);
-                _logsHandler = null;
-
-                void onLogReceived(string condition, string stacktrace, LogType type)
+                _pending = new PendingBroadcast
                 {
-                    if (string.IsNullOrEmpty(stacktrace))
-                    {
-                        stacktrace = manualStacktrace;
-                    }
-                    BroadcastLog(Data, _tags, logLevel, message, stacktrace, color, context);
-                }
+                    Data = Data,
+                    Tags = _tags,
+                    LogLevel = logLevel,
+                    Message = message,
+                    ManualStacktrace = manualStacktrace,
+                    Color = color,
+                    Context = context,
+                };
+                _broadcasting = true;
+                Data.LogHandler.Default.Log(logLevel.ConvertToLogType(), (object)formattedMessage, context);
+                _broadcasting = false;
+                _pending = default;
             }
             // means that this log should not be sent to Unity, but can be sent to other targets
             else

@@ -36,7 +36,20 @@ namespace Appegy.UniLogger
 #endif
 
         private static readonly ULogger _unsortedLogger = ULogger.GetLogger(Tags.Unsorted);
-        private static Action<string, string, LogType> _logsHandler;
+
+        [ThreadStatic] private static PendingBroadcast _pending;
+        [ThreadStatic] private static bool _broadcasting;
+
+        private struct PendingBroadcast
+        {
+            public ULoggerData Data;
+            public IReadOnlyList<string> Tags;
+            public LogLevel LogLevel;
+            public string Message;
+            public string ManualStacktrace;
+            public Color Color;
+            public UnityEngine.Object Context;
+        }
 
         [CanBeNull]
         private static ULoggerData Data { get; set; }
@@ -88,9 +101,14 @@ namespace Appegy.UniLogger
 
         private static void OnLogMessageReceivedThreaded(string condition, string stacktrace, LogType type)
         {
-            if (_logsHandler != null)
+            if (_broadcasting)
             {
-                _logsHandler(condition, stacktrace, type);
+                var pending = _pending;
+                if (string.IsNullOrEmpty(stacktrace))
+                {
+                    stacktrace = pending.ManualStacktrace;
+                }
+                BroadcastLog(pending.Data, pending.Tags, pending.LogLevel, pending.Message, stacktrace, pending.Color, pending.Context);
             }
             else
             {
