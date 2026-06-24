@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -14,49 +15,24 @@ namespace Appegy.UniLogger
         private const string TargetAssembly = "Appegy.UniLogger";
         private const string LangVersion = "9.0";
 
-        [Test]
-        public void Compiles_With_AllLogsEnabled()
+        private static IEnumerable<TestCaseData> DefineCombinations()
         {
-            AssertCompiles();
+            yield return Combination("all logs enabled");
+            yield return Combination("trace off", "ULOGGER_TRACE_OFF");
+            yield return Combination("logs off", "ULOGGER_LOGS_OFF");
+            yield return Combination("warnings off", "ULOGGER_WARNINGS_OFF");
+            yield return Combination("errors off", "ULOGGER_ERRORS_OFF");
+            yield return Combination("disable all logs", "ULOGGER_DISABLE_ALL_LOGS");
+            yield return Combination("every level off", "ULOGGER_TRACE_OFF", "ULOGGER_LOGS_OFF", "ULOGGER_WARNINGS_OFF", "ULOGGER_ERRORS_OFF");
         }
 
-        [Test]
-        public void Compiles_With_TraceOff()
+        private static TestCaseData Combination(string name, params string[] defines)
         {
-            AssertCompiles("ULOGGER_TRACE_OFF");
+            return new TestCaseData((object)defines).SetName(name);
         }
 
-        [Test]
-        public void Compiles_With_LogsOff()
-        {
-            AssertCompiles("ULOGGER_LOGS_OFF");
-        }
-
-        [Test]
-        public void Compiles_With_WarningsOff()
-        {
-            AssertCompiles("ULOGGER_WARNINGS_OFF");
-        }
-
-        [Test]
-        public void Compiles_With_ErrorsOff()
-        {
-            AssertCompiles("ULOGGER_ERRORS_OFF");
-        }
-
-        [Test]
-        public void Compiles_With_DisableAllLogs()
-        {
-            AssertCompiles("ULOGGER_DISABLE_ALL_LOGS");
-        }
-
-        [Test]
-        public void Compiles_With_EveryLevelOff()
-        {
-            AssertCompiles("ULOGGER_TRACE_OFF", "ULOGGER_LOGS_OFF", "ULOGGER_WARNINGS_OFF", "ULOGGER_ERRORS_OFF");
-        }
-
-        private static void AssertCompiles(params string[] extraDefines)
+        [TestCaseSource(nameof(DefineCombinations))]
+        public void CompilesWithoutErrorsOrWarnings(string[] extraDefines)
         {
             var assembly = CompilationPipeline.GetAssemblies(AssembliesType.Editor)
                 .FirstOrDefault(c => c.name == TargetAssembly);
