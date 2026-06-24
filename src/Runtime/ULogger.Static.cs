@@ -28,7 +28,7 @@ namespace Appegy.UniLogger
     public partial class ULogger
     {
 #if ULOGGER_DISABLE_ALL_LOGS
-        private static readonly ULogger _disabledLogger = new ULogger(Config, Tags.Disabled.AsEnumerable());
+        private static readonly ULogger _disabledLogger = new ULogger(Tags.Disabled.AsEnumerable());
 #endif
 
         private static readonly ULogger _unsortedLogger = ULogger.GetLogger(Tags.Unsorted);
