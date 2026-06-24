@@ -9,7 +9,7 @@ namespace Appegy.UniLogger
         private const float TagColorSaturation = 0.7f;
         private const float TagColorValue = 0.8f;
 
-        private static readonly Dictionary<string, string> _tagColorPrefixes = new Dictionary<string, string>();
+        private static readonly Dictionary<string, string> _tagColorHex = new Dictionary<string, string>();
 
         public FormatOptions FormatOptions { get; set; }
 
@@ -103,7 +103,7 @@ namespace Appegy.UniLogger
                 var tag = line.Tags[i];
                 if (RichText)
                 {
-                    builder.Append(GetTagColorPrefix(tag));
+                    AppendTagColorOpenTag(builder, tag);
                     builder.Append("[");
                     builder.Append(tag);
                     builder.Append("]</color>");
@@ -137,18 +137,25 @@ namespace Appegy.UniLogger
             }
         }
 
-        private static string GetTagColorPrefix(string tag)
+        private static void AppendTagColorOpenTag(StringBuilder builder, string tag)
         {
-            lock (_tagColorPrefixes)
+            builder.Append("<color=#");
+            builder.Append(GetTagColorHex(tag));
+            builder.Append(">");
+        }
+
+        private static string GetTagColorHex(string tag)
+        {
+            lock (_tagColorHex)
             {
-                if (_tagColorPrefixes.TryGetValue(tag, out var prefix)) return prefix;
+                if (_tagColorHex.TryGetValue(tag, out var hex)) return hex;
 
                 var hue = (StableHash(tag) & 0xFFFFFF) / (float)0x1000000;
                 var color = Color.HSVToRGB(hue, TagColorSaturation, TagColorValue);
-                prefix = "<color=#" + ColorUtility.ToHtmlStringRGBA(color) + ">";
+                hex = ColorUtility.ToHtmlStringRGBA(color);
 
-                _tagColorPrefixes[tag] = prefix;
-                return prefix;
+                _tagColorHex[tag] = hex;
+                return hex;
             }
         }
 
