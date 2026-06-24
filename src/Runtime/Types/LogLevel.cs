@@ -16,7 +16,7 @@ namespace Appegy.UniLogger
 
     public static class LogLevelExtensions
     {
-        public static readonly IReadOnlyList<LogLevel> LogTypes = Enum.GetValues(typeof(LogType)).Cast<LogLevel>().ToArray();
+        public static readonly IReadOnlyList<LogLevel> LogTypes = Enum.GetValues(typeof(LogLevel)).Cast<LogLevel>().ToArray();
 
         public static LogLevel ConvertToLogLevel(this LogType original)
         {
