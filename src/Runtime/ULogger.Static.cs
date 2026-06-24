@@ -17,6 +17,7 @@
 #endif
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -29,6 +30,9 @@ namespace Appegy.UniLogger
     {
 #if ULOGGER_DISABLE_ALL_LOGS
         private static readonly ULogger _disabledLogger = new ULogger(Tags.Disabled.AsEnumerable());
+#else
+        private static readonly ConcurrentDictionary<string, ULogger> _loggersByTag = new ConcurrentDictionary<string, ULogger>();
+        private static readonly Func<string, ULogger> _loggerFactory = tag => new ULogger(tag.AsEnumerable());
 #endif
 
         private static readonly ULogger _unsortedLogger = ULogger.GetLogger(Tags.Unsorted);
@@ -119,7 +123,7 @@ namespace Appegy.UniLogger
 #if ULOGGER_DISABLE_ALL_LOGS
             return _disabledLogger;
 #else
-            return new ULogger(tag.GetTag().AsEnumerable());
+            return _loggersByTag.GetOrAdd(tag.GetTag(), _loggerFactory);
 #endif
         }
 
@@ -128,7 +132,7 @@ namespace Appegy.UniLogger
 #if ULOGGER_DISABLE_ALL_LOGS
             return _disabledLogger;
 #else
-            return new ULogger(tag.GetTag().AsEnumerable());
+            return _loggersByTag.GetOrAdd(tag.GetTag(), _loggerFactory);
 #endif
         }
 
@@ -137,7 +141,7 @@ namespace Appegy.UniLogger
 #if ULOGGER_DISABLE_ALL_LOGS
             return _disabledLogger;
 #else
-            return new ULogger(tag.AsEnumerable());
+            return _loggersByTag.GetOrAdd(tag, _loggerFactory);
 #endif
         }
 
