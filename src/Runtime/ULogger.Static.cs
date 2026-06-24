@@ -123,7 +123,7 @@ namespace Appegy.UniLogger
 #if ULOGGER_DISABLE_ALL_LOGS
             return _disabledLogger;
 #else
-            return _loggersByTag.GetOrAdd(tag.GetTag(), _loggerFactory);
+            return _loggersByTag.GetOrAdd(EnumTagCache<TLoggerTag>.Get(tag), _loggerFactory);
 #endif
         }
 
