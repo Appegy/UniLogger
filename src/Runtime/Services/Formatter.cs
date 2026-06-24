@@ -95,8 +95,9 @@ namespace Appegy.UniLogger
         {
             if (!ShowTagName) return;
 
-            foreach (var tag in line.Tags)
+            for (var i = 0; i < line.Tags.Count; i++)
             {
+                var tag = line.Tags[i];
                 if (RichText)
                 {
                     builder.Append("<color=#");

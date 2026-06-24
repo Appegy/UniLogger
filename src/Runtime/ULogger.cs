@@ -25,14 +25,14 @@ namespace Appegy.UniLogger
             // means it is possible to send log to Unity, catch using Application.logMessageReceivedThreaded and broadcast to other targets
             if (WillBeAllowedByFilterer(Data.UnityTarget.Filterer, logLevel, _tags))
             {
-                var line = new LogEntry(_tags.Where(c => Data.UnityTarget.Filterer.IsAllowed(logLevel, c)), logLevel, message, color, context);
+                var line = new LogEntry(FilterTags(_tags, Data.UnityTarget.Filterer, logLevel), logLevel, message, color, context);
                 var formattedMessage = Data.UnityTarget.Formatter.Format(line);
 
-                // manually extract stack trace if stack it disabled by unity (or we are in separate thread) but some target needs it 
+                // manually extract stack trace if stack it disabled by unity (or we are in separate thread) but some target needs it
                 var manualStacktrace = string.Empty;
                 if (!ThreadDispatcher.IsMainThread ||
                     Application.GetStackTraceLogType(logLevel.ConvertToLogType()) == StackTraceLogType.None &&
-                    Data.Targets.Any(c => WillBeAllowedByFilterer(c.Filterer, logLevel, _tags) && c.GetStackTraceEnabled(logLevel)))
+                    AnyTargetNeedsStacktrace(logLevel))
                 {
                     manualStacktrace = StackTraceUtility.ExtractStackTrace();
                 }
@@ -55,8 +55,12 @@ namespace Appegy.UniLogger
             {
                 var manualStacktrace = string.Empty;
                 var allowedByAnyFilterer = false;
-                foreach (var target in Data.Targets.Where(c => WillBeAllowedByFilterer(c.Filterer, logLevel, _tags)))
+                foreach (var target in Data.Targets)
                 {
+                    if (!WillBeAllowedByFilterer(target.Filterer, logLevel, _tags))
+                    {
+                        continue;
+                    }
                     allowedByAnyFilterer = true;
                     if (string.IsNullOrEmpty(manualStacktrace) && target.GetStackTraceEnabled(logLevel))
                     {
@@ -70,6 +74,18 @@ namespace Appegy.UniLogger
             }
         }
 
+        private bool AnyTargetNeedsStacktrace(LogLevel logLevel)
+        {
+            foreach (var target in Data.Targets)
+            {
+                if (WillBeAllowedByFilterer(target.Filterer, logLevel, _tags) && target.GetStackTraceEnabled(logLevel))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
         internal void BroadcastUnobservedLog(string message, string stacktrace, LogType type)
         {
             if (Data == null) return;
@@ -79,11 +95,15 @@ namespace Appegy.UniLogger
 
         private static void BroadcastLog(ULoggerData data, IReadOnlyList<string> tags, LogLevel logLevel, string message, string stackTrace, Color color, Object context)
         {
-            foreach (var target in data.Targets.Where(c => WillBeAllowedByFilterer(c.Filterer, logLevel, tags)))
+            foreach (var target in data.Targets)
             {
+                if (!WillBeAllowedByFilterer(target.Filterer, logLevel, tags))
+                {
+                    continue;
+                }
                 try
                 {
-                    var line = new LogEntry(tags.Where(c => target.Filterer.IsAllowed(logLevel, c)), logLevel, message, color, context);
+                    var line = new LogEntry(FilterTags(tags, target.Filterer, logLevel), logLevel, message, color, context);
                     var formattedMessage = target.Formatter.Format(line);
                     var targetStackTrace = target.GetStackTraceEnabled(line.LogLevel) ? stackTrace : null;
                     target.Log(formattedMessage, targetStackTrace);
@@ -95,9 +115,37 @@ namespace Appegy.UniLogger
             }
         }
 
-        private static bool WillBeAllowedByFilterer(Filterer filterer, LogLevel logLevel, IEnumerable<string> tags)
+        private static bool WillBeAllowedByFilterer(Filterer filterer, LogLevel logLevel, IReadOnlyList<string> tags)
         {
-            return tags.Any(c => filterer.IsAllowed(logLevel, c));
+            for (var i = 0; i < tags.Count; i++)
+            {
+                if (filterer.IsAllowed(logLevel, tags[i]))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private static IReadOnlyList<string> FilterTags(IReadOnlyList<string> tags, Filterer filterer, LogLevel logLevel)
+        {
+            List<string> filtered = null;
+            for (var i = 0; i < tags.Count; i++)
+            {
+                if (filterer.IsAllowed(logLevel, tags[i]))
+                {
+                    filtered?.Add(tags[i]);
+                }
+                else if (filtered == null)
+                {
+                    filtered = new List<string>(tags.Count);
+                    for (var j = 0; j < i; j++)
+                    {
+                        filtered.Add(tags[j]);
+                    }
+                }
+            }
+            return filtered ?? tags;
         }
     }
 }
