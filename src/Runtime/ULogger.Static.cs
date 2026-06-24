@@ -37,8 +37,7 @@ namespace Appegy.UniLogger
 
         private static readonly ULogger _unsortedLogger = ULogger.GetLogger(Tags.Unsorted);
 
-        [ThreadStatic] private static PendingBroadcast _pending;
-        [ThreadStatic] private static bool _broadcasting;
+        [ThreadStatic] private static PendingBroadcast? _pending;
 
         private struct PendingBroadcast
         {
@@ -101,9 +100,9 @@ namespace Appegy.UniLogger
 
         private static void OnLogMessageReceivedThreaded(string condition, string stacktrace, LogType type)
         {
-            if (_broadcasting)
+            if (_pending.HasValue)
             {
-                var pending = _pending;
+                var pending = _pending.Value;
                 if (string.IsNullOrEmpty(stacktrace))
                 {
                     stacktrace = pending.ManualStacktrace;

@@ -47,10 +47,8 @@ namespace Appegy.UniLogger
                     Color = color,
                     Context = context,
                 };
-                _broadcasting = true;
                 Data.LogHandler.Default.Log(logLevel.ConvertToLogType(), (object)formattedMessage, context);
-                _broadcasting = false;
-                _pending = default;
+                _pending = null;
             }
             // means that this log should not be sent to Unity, but can be sent to other targets
             else
