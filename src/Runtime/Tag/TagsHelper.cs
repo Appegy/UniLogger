@@ -8,11 +8,6 @@ namespace Appegy.UniLogger
         private static readonly Dictionary<Type, string> _tagTypesCache = new Dictionary<Type, string>();
         private static readonly Dictionary<Enum, string> _tagEnumsCache = new Dictionary<Enum, string>();
 
-        public static IEnumerable<T> AsEnumerable<T>(this T item)
-        {
-            yield return item;
-        }
-
         public static string GetTag(this object tag)
         {
             return tag switch

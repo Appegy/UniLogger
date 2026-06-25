@@ -8,6 +8,11 @@ namespace Appegy.UniLogger
     {
         private readonly IReadOnlyList<string> _tags;
 
+        internal ULogger(string tag)
+        {
+            _tags = new[] { tag };
+        }
+
         internal ULogger(IEnumerable<string> tags)
         {
             _tags = tags.Distinct().OrderBy(c => c).ToList();
