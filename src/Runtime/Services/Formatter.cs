@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
 
@@ -8,6 +9,7 @@ namespace Appegy.UniLogger
     {
         private const float TagColorSaturation = 0.7f;
         private const float TagColorValue = 0.8f;
+        private const string HexDigits = "0123456789ABCDEF";
 
         private static readonly Dictionary<string, string> _tagColorHex = new Dictionary<string, string>();
 
@@ -56,13 +58,13 @@ namespace Appegy.UniLogger
             if (RichText)
             {
                 builder.Append("[<i><color=yellow>");
-                builder.Append(line.LogTime.ToString("HH:mm:ss:fff"));
+                AppendTimeOfDay(builder, line.LogTime);
                 builder.Append("</color></i>]");
             }
             else
             {
                 builder.Append("[");
-                builder.Append(line.LogTime.ToString("HH:mm:ss:fff"));
+                AppendTimeOfDay(builder, line.LogTime);
                 builder.Append("]");
             }
         }
@@ -126,7 +128,7 @@ namespace Appegy.UniLogger
             if (RichText && line.IsColored)
             {
                 builder.Append("<color=#");
-                builder.Append(ColorUtility.ToHtmlStringRGBA(line.Color));
+                AppendColorHex(builder, line.Color);
                 builder.Append(">");
                 builder.Append(line.String);
                 builder.Append("</color>");
@@ -170,6 +172,49 @@ namespace Appegy.UniLogger
                 hash *= prime;
             }
             return hash;
+        }
+
+        private static void AppendTimeOfDay(StringBuilder builder, DateTime time)
+        {
+            AppendTwoDigits(builder, time.Hour);
+            builder.Append(':');
+            AppendTwoDigits(builder, time.Minute);
+            builder.Append(':');
+            AppendTwoDigits(builder, time.Second);
+            builder.Append(':');
+            AppendThreeDigits(builder, time.Millisecond);
+        }
+
+        private static void AppendTwoDigits(StringBuilder builder, int value)
+        {
+            builder.Append((char)('0' + value / 10 % 10));
+            builder.Append((char)('0' + value % 10));
+        }
+
+        private static void AppendThreeDigits(StringBuilder builder, int value)
+        {
+            builder.Append((char)('0' + value / 100 % 10));
+            builder.Append((char)('0' + value / 10 % 10));
+            builder.Append((char)('0' + value % 10));
+        }
+
+        private static void AppendColorHex(StringBuilder builder, Color color)
+        {
+            AppendByteHex(builder, ToByte(color.r));
+            AppendByteHex(builder, ToByte(color.g));
+            AppendByteHex(builder, ToByte(color.b));
+            AppendByteHex(builder, ToByte(color.a));
+        }
+
+        private static void AppendByteHex(StringBuilder builder, byte value)
+        {
+            builder.Append(HexDigits[value >> 4]);
+            builder.Append(HexDigits[value & 0xF]);
+        }
+
+        private static byte ToByte(float channel)
+        {
+            return (byte)Mathf.Clamp(Mathf.RoundToInt(channel * 255f), 0, 255);
         }
     }
 }
