@@ -29,10 +29,10 @@ namespace Appegy.UniLogger
     public partial class ULogger
     {
 #if ULOGGER_DISABLE_ALL_LOGS
-        private static readonly ULogger _disabledLogger = new ULogger(Tags.Disabled.AsEnumerable());
+        private static readonly ULogger _disabledLogger = new ULogger(Tags.Disabled);
 #else
         private static readonly ConcurrentDictionary<string, ULogger> _loggersByTag = new ConcurrentDictionary<string, ULogger>();
-        private static readonly Func<string, ULogger> _loggerFactory = tag => new ULogger(tag.AsEnumerable());
+        private static readonly Func<string, ULogger> _loggerFactory = tag => new ULogger(tag);
 #endif
 
         private static readonly ULogger _unsortedLogger = ULogger.GetLogger(Tags.Unsorted);
