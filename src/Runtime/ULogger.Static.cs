@@ -80,25 +80,28 @@ namespace Appegy.UniLogger
             return null;
         }
 
-        public static void AddTarget(Target target)
+        public static void AddTarget<T>(T target) where T : Target
         {
             if (target == null) throw new ArgumentNullException(nameof(target));
             if (Data == null) throw new InvalidOperationException($"{nameof(ULogger)}.{nameof(Initialize)} must be called before adding targets.");
-            Data.AddTarget(target);
+            if (!Data.AddTarget(target))
+            {
+                throw new InvalidOperationException($"A target of type '{target.GetType().Name}' is already registered.");
+            }
         }
 
-        public static bool RemoveTarget(Target target)
+        public static bool RemoveTarget<T>() where T : Target
         {
-            if (target == null) throw new ArgumentNullException(nameof(target));
             if (Data == null) return false;
-            if (!Data.RemoveTarget(target)) return false;
-            if (target is IDisposable disposable)
+            var removed = Data.RemoveTarget(typeof(T));
+            if (removed == null) return false;
+            if (removed is IDisposable disposable)
             {
                 disposable.Dispose();
             }
             else
             {
-                target.Flush();
+                removed.Flush();
             }
             return true;
         }

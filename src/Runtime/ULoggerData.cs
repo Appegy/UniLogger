@@ -17,7 +17,11 @@ namespace Appegy.UniLogger
         {
             lock (_targetsLock)
             {
-                if (Array.IndexOf(_targets, target) >= 0) return false;
+                var type = target.GetType();
+                foreach (var existing in _targets)
+                {
+                    if (existing.GetType() == type) return false;
+                }
                 var next = new Target[_targets.Length + 1];
                 Array.Copy(_targets, next, _targets.Length);
                 next[_targets.Length] = target;
@@ -26,22 +30,31 @@ namespace Appegy.UniLogger
             }
         }
 
-        public bool RemoveTarget(Target target)
+        public Target RemoveTarget(Type type)
         {
             lock (_targetsLock)
             {
-                var index = Array.IndexOf(_targets, target);
-                if (index < 0) return false;
+                var index = -1;
+                for (var i = 0; i < _targets.Length; i++)
+                {
+                    if (type.IsInstanceOfType(_targets[i]))
+                    {
+                        index = i;
+                        break;
+                    }
+                }
+                if (index < 0) return null;
+                var removed = _targets[index];
                 if (_targets.Length == 1)
                 {
                     _targets = Array.Empty<Target>();
-                    return true;
+                    return removed;
                 }
                 var next = new Target[_targets.Length - 1];
                 Array.Copy(_targets, 0, next, 0, index);
                 Array.Copy(_targets, index + 1, next, index, _targets.Length - index - 1);
                 _targets = next;
-                return true;
+                return removed;
             }
         }
     }
