@@ -1,8 +1,7 @@
 <!-- omit from toc -->
-# 📝 Optimized logger for Unity3d
+# 📝 Optimized logger for Unity
 
 [![openupm](https://img.shields.io/npm/v/com.appegy.unilogger?label=openupm&registry_uri=https://package.openupm.com)](https://openupm.com/packages/com.appegy.unilogger/)
-[![TODO](https://badgen.net/https/api.tickgit.com/badgen/github.com/Appegy/UniLogger)](https://www.tickgit.com/browse?repo=github.com/Appegy/UniLogger)
 
 Logging is an essential component of project diagnostics during development and testing. However, it comes with a drawback: the more logs you have, the more challenging it becomes to locate the specific ones you need at any given moment.
 
@@ -64,6 +63,7 @@ During initialization, you will need to configure the Formatter and Filterer to 
 
 ```C#
 using UnityEngine;
+using Appegy.UniLogger;
 
 public static class ULoggerInitializer
 {
@@ -90,6 +90,7 @@ Example:
 
 ```C#
 using UnityEngine;
+using Appegy.UniLogger;
 
 public class ExampleBehaviour : MonoBehaviour
 {
@@ -135,6 +136,7 @@ When creating an instance of `ULogger`, you can pass any number of objects as pa
 Example:
 ```C#
 using UnityEngine;
+using Appegy.UniLogger;
 
 [TagName("TAG_TYPE")]
 public class ExampleBehaviour : MonoBehaviour
@@ -171,16 +173,88 @@ public class ExampleBehaviour : MonoBehaviour
 
 ## Logs filtering
 
-TODO
+A `Filterer` decides which logs a target accepts. A log is accepted only when both its level and its tag are allowed.
+
+Choose the default tag policy in the constructor:
+
+- `new Filterer(true)` - opt-out: every tag is allowed until you disable it.
+- `new Filterer(false)` - opt-in: every tag is denied until you enable it.
+
+```C#
+var filterer = new Filterer(true);
+
+// Disable an entire level
+filterer.SetAllowed(LogLevel.Trace, false);
+
+// Mute a noisy tag
+filterer.SetAllowed("Input", false);
+```
+
+```C#
+// Opt-in: deny everything, then allow only what you need
+var whitelist = new Filterer(false);
+whitelist.SetAllowed("Network", true);
+whitelist.SetAllowed("Save", true);
+```
+
+A log with several tags is accepted if at least one of its tags is allowed, and only the allowed tags are shown. The filterer you pass to `ULogger.Initialize` controls the Unity console.
 
 ## Logs formatting
 
-TODO
+A `Formatter` turns a log into its final string. Build one from `FormatOptions` flags (combine with `|`):
+
+| Option | Effect |
+| --- | --- |
+| `None` | Raw message, no decoration |
+| `RichText` | Enables color: per-tag colors, the level color, and any explicit message color |
+| `Time` | Prefixes the timestamp as `[HH:mm:ss:fff]` |
+| `Thread` | Prefixes the managed thread id as `[TH=<id>]` |
+| `Tags` | Prefixes every tag as `[Tag]` |
+| `LogType` | Prefixes the level as `[TR]` / `[LG]` / `[WN]` / `[ER]` / `[EX]` |
+
+```C#
+// Verbose, colored output (handy in the editor)
+var editor = new Formatter(FormatOptions.RichText | FormatOptions.Tags | FormatOptions.Time | FormatOptions.LogType);
+
+// Compact, plain output (handy in builds)
+var build = new Formatter(FormatOptions.Tags | FormatOptions.LogType);
+```
+
+Tag colors are derived deterministically from the tag name, so a given tag always gets the same color across runs and platforms. `RichText` must be enabled for any coloring to appear.
 
 ## Logs targets
 
-TODO
+A target is where formatted logs are written. Each target owns its own `Formatter` and `Filterer`, so formatting and filtering are decided per destination.
+
+The built-in `UnityTarget` writes to the Unity console. You configure it when you initialize the logger - the `formatter` and `filterer` you pass become the console target's settings:
+
+```C#
+ULogger.Initialize(formatter, filterer);
+```
+
+You can inspect the active targets at runtime:
+
+```C#
+foreach (var target in ULogger.GetTargets()) { /* ... */ }
+var unityTarget = ULogger.GetTarget<UnityTarget>();
+```
+
+> Routing logs to additional destinations (files, remote services, and so on) is on the roadmap and not yet part of the public API. Today the Unity console is the active target.
 
 ## Removing logs from release builds
 
-TODO
+ULogger can remove logging at compile time. Disabled calls are marked with `[Conditional]`, so the compiler strips the entire call, including its argument expressions. An interpolated string like `$"Spawned {count} enemies"` is never built, so there is no string allocation and no runtime cost.
+
+Add the matching Scripting Define Symbol (Project Settings -> Player -> Scripting Define Symbols):
+
+| Define | Effect |
+| --- | --- |
+| `ULOGGER_TRACE_OFF` | strips `Trace` calls |
+| `ULOGGER_LOGS_OFF` | strips `Log` calls |
+| `ULOGGER_WARNINGS_OFF` | strips `LogWarning` calls |
+| `ULOGGER_ERRORS_OFF` | strips `LogError` calls |
+| `ULOGGER_DISABLE_ALL_LOGS` | strips all of the above at once |
+
+`LogException` is never stripped, so exceptions are always reported.
+
+This is compile-time removal: the code is gone from the build. To toggle logs while the game runs, filter them at runtime with a `Filterer` instead (see [Logs filtering](#logs-filtering)).
