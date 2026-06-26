@@ -70,7 +70,30 @@ namespace Appegy.UniLogger
             {
                 return unityTarget;
             }
-            return Data.Targets.First(c => c is T) as T;
+            foreach (var target in Data.Targets)
+            {
+                if (target is T match)
+                {
+                    return match;
+                }
+            }
+            return null;
+        }
+
+        public static void AddTarget(Target target)
+        {
+            if (target == null) throw new ArgumentNullException(nameof(target));
+            if (Data == null) throw new InvalidOperationException($"{nameof(ULogger)}.{nameof(Initialize)} must be called before adding targets.");
+            Data.AddTarget(target);
+        }
+
+        public static bool RemoveTarget(Target target)
+        {
+            if (target == null) throw new ArgumentNullException(nameof(target));
+            if (Data == null) return false;
+            if (!Data.RemoveTarget(target)) return false;
+            target.Flush();
+            return true;
         }
 
         public static void Initialize(Formatter unityFormatter = null, Filterer unityFilterer = null)
@@ -95,6 +118,7 @@ namespace Appegy.UniLogger
             Debug.unityLogger.logHandler = Data.LogHandler.Default;
             Application.logMessageReceivedThreaded -= OnLogMessageReceivedThreaded;
             TaskScheduler.UnobservedTaskException -= OnUnobservedTaskException;
+            Flush();
             Data = null;
         }
 
