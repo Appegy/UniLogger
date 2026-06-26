@@ -1,5 +1,5 @@
 <!-- omit from toc -->
-# 📝 Optimized logger for Unity3d
+# 📝 Optimized logger for Unity
 
 [![openupm](https://img.shields.io/npm/v/com.appegy.unilogger?label=openupm&registry_uri=https://package.openupm.com)](https://openupm.com/packages/com.appegy.unilogger/)
 
