@@ -92,7 +92,14 @@ namespace Appegy.UniLogger
             if (target == null) throw new ArgumentNullException(nameof(target));
             if (Data == null) return false;
             if (!Data.RemoveTarget(target)) return false;
-            target.Flush();
+            if (target is IDisposable disposable)
+            {
+                disposable.Dispose();
+            }
+            else
+            {
+                target.Flush();
+            }
             return true;
         }
 
@@ -119,6 +126,13 @@ namespace Appegy.UniLogger
             Application.logMessageReceivedThreaded -= OnLogMessageReceivedThreaded;
             TaskScheduler.UnobservedTaskException -= OnUnobservedTaskException;
             Flush();
+            foreach (var target in Data.Targets)
+            {
+                if (target is IDisposable disposable)
+                {
+                    disposable.Dispose();
+                }
+            }
             Data = null;
         }
 
