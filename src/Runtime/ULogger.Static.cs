@@ -70,12 +70,44 @@ namespace Appegy.UniLogger
             {
                 return unityTarget;
             }
-            return Data.Targets.First(c => c is T) as T;
+            foreach (var target in Data.Targets)
+            {
+                if (target is T match)
+                {
+                    return match;
+                }
+            }
+            return null;
+        }
+
+        public static void AddTarget<T>(T target) where T : Target
+        {
+            if (target == null) throw new ArgumentNullException(nameof(target));
+            if (Data == null) throw new InvalidOperationException($"{nameof(ULogger)}.{nameof(Initialize)} must be called before adding targets.");
+            if (!Data.AddTarget(target))
+            {
+                throw new InvalidOperationException($"A target of type '{target.GetType().Name}' is already registered.");
+            }
+        }
+
+        public static bool RemoveTarget<T>() where T : Target
+        {
+            if (Data == null) return false;
+            var removed = Data.RemoveTarget(typeof(T));
+            if (removed == null) return false;
+            if (removed is IDisposable disposable)
+            {
+                disposable.Dispose();
+            }
+            else
+            {
+                removed.Flush();
+            }
+            return true;
         }
 
         public static void Initialize(Formatter unityFormatter = null, Filterer unityFilterer = null)
         {
-            // prepare default loggers and swap unity logger to custom
             unityFormatter ??= new Formatter();
             unityFilterer ??= new Filterer(true);
             var unityTarget = new UnityTarget(unityFormatter, unityFilterer);
@@ -95,6 +127,14 @@ namespace Appegy.UniLogger
             Debug.unityLogger.logHandler = Data.LogHandler.Default;
             Application.logMessageReceivedThreaded -= OnLogMessageReceivedThreaded;
             TaskScheduler.UnobservedTaskException -= OnUnobservedTaskException;
+            Flush();
+            foreach (var target in Data.Targets)
+            {
+                if (target is IDisposable disposable)
+                {
+                    disposable.Dispose();
+                }
+            }
             Data = null;
         }
 
