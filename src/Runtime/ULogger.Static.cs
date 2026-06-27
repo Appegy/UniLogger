@@ -159,10 +159,10 @@ namespace Appegy.UniLogger
 
         private static void OnApplicationFocusChanged(bool focused)
         {
-            if (!focused)
-            {
-                Flush();
-            }
+            if (focused) return;
+            var data = Data;
+            if (data == null) return;
+            data.Dispatcher.Flush();
         }
 
         private static void OnLogMessageReceivedThreaded(string condition, string stacktrace, LogType type)
@@ -187,13 +187,6 @@ namespace Appegy.UniLogger
         {
             if (Data == null) return;
             Data.LogHandler.Default.LogException(e.Exception.InnerException ?? e.Exception);
-        }
-
-        public static void Flush()
-        {
-            var data = Data;
-            if (data == null) return;
-            data.Dispatcher.Flush();
         }
 
         #region GetLogger
