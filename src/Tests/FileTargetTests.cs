@@ -1,0 +1,80 @@
+using System;
+using System.IO;
+using FluentAssertions;
+using NUnit.Framework;
+
+namespace Appegy.UniLogger
+{
+    public class FileTargetTests
+    {
+        private string _directory;
+
+        [SetUp]
+        public void SetUp()
+        {
+            _directory = Path.Combine(Path.GetTempPath(), "ulogger-filetarget-" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(_directory);
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            try
+            {
+                if (Directory.Exists(_directory)) Directory.Delete(_directory, true);
+            }
+            catch
+            {
+                // best effort cleanup
+            }
+        }
+
+        [Test]
+        public void WhenMessageLogged_ThanItIsWrittenToCurrentFile()
+        {
+            using var target = new FileTarget(Path.Combine(_directory, "game.log"));
+
+            target.Log("hello", null);
+            target.Flush();
+
+            File.ReadAllText(target.CurrentFilePath).Should().Be("hello\n");
+        }
+
+        [Test]
+        public void WhenStackTraceProvided_ThanItIsWrittenAfterMessage()
+        {
+            using var target = new FileTarget(Path.Combine(_directory, "game.log"));
+
+            target.Log("msg", "trace");
+            target.Flush();
+
+            File.ReadAllText(target.CurrentFilePath).Should().Be("msg\ntrace\n");
+        }
+
+        [Test]
+        public void WhenSizeLimitExceeded_ThanLogRollsToNextFile()
+        {
+            using var target = new FileTarget(Path.Combine(_directory, "game.log"), fileSizeLimitBytes: 16);
+
+            target.Log("0123456789", null);
+            target.Log("0123456789", null);
+            target.Flush();
+
+            target.GetLogFiles().Length.Should().Be(2);
+        }
+
+        [Test]
+        public void WhenRetentionLimitSet_ThanOnlyNewestFilesAreKept()
+        {
+            using var target = new FileTarget(Path.Combine(_directory, "game.log"), fileSizeLimitBytes: 8, retainedFileCountLimit: 2);
+
+            for (var i = 0; i < 5; i++)
+            {
+                target.Log("12345", null);
+            }
+            target.Flush();
+
+            Directory.GetFiles(_directory).Length.Should().Be(2);
+        }
+    }
+}
