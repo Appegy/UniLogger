@@ -28,7 +28,7 @@ namespace Appegy.UniLogger
             string path,
             long fileSizeLimitBytes = 0,
             int retainedFileCountLimit = 0,
-            bool autoFlush = true,
+            bool autoFlush = false,
             Formatter formatter = null,
             Filterer filterer = null)
             : base(formatter, filterer)

@@ -1,34 +1,44 @@
 using System;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace Appegy.UniLogger
 {
     internal class ULoggerData
     {
-        public List<Target> Targets { get; } = new List<Target>();
+        private volatile Target[] _targets = Array.Empty<Target>();
+
+        public Target[] Targets => _targets;
         public UnityTarget UnityTarget { get; init; }
         public UnityLogger LogHandler { get; init; }
+        public LogDispatcher Dispatcher { get; set; }
 
         public bool AddTarget(Target target)
         {
             var type = target.GetType();
-            foreach (var existing in Targets)
+            var current = _targets;
+            foreach (var existing in current)
             {
                 if (existing.GetType() == type) return false;
             }
-            Targets.Add(target);
+            var updated = new Target[current.Length + 1];
+            Array.Copy(current, updated, current.Length);
+            updated[current.Length] = target;
+            _targets = updated;
             return true;
         }
 
         public Target RemoveTarget(Type type)
         {
-            for (var i = 0; i < Targets.Count; i++)
+            var current = _targets;
+            for (var i = 0; i < current.Length; i++)
             {
-                if (type.IsInstanceOfType(Targets[i]))
+                if (type.IsInstanceOfType(current[i]))
                 {
-                    var removed = Targets[i];
-                    Targets.RemoveAt(i);
+                    var removed = current[i];
+                    var updated = new Target[current.Length - 1];
+                    Array.Copy(current, 0, updated, 0, i);
+                    Array.Copy(current, i + 1, updated, i, current.Length - i - 1);
+                    _targets = updated;
                     return removed;
                 }
             }

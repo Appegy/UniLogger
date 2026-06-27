@@ -1,4 +1,5 @@
-﻿using System.Threading;
+using System;
+using System.Threading;
 using UnityEngine;
 
 namespace Appegy.UniLogger
@@ -9,10 +10,18 @@ namespace Appegy.UniLogger
 
         public static bool IsMainThread => MainThread != null && MainThread.ManagedThreadId == Thread.CurrentThread.ManagedThreadId;
 
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        private static void AutoConfigureLogger()
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterAssembliesLoaded)]
+        private static void CaptureMainThread()
         {
             MainThread = Thread.CurrentThread;
+        }
+
+        public static void EnsureMainThread(string operation)
+        {
+            if (MainThread != null && MainThread.ManagedThreadId != Thread.CurrentThread.ManagedThreadId)
+            {
+                throw new InvalidOperationException($"{nameof(ULogger)}.{operation} must be called from the main thread.");
+            }
         }
     }
 }
