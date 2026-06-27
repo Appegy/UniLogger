@@ -32,12 +32,13 @@ namespace Appegy.UniLogger
             };
         }
 
-        public virtual void SetAllowed(LogLevel logLevel, bool value)
+        public Filterer SetAllowed(LogLevel logLevel, bool value)
         {
             _logTypeEnabled[(int)logLevel] = value;
+            return this;
         }
 
-        public virtual void SetAllowed(string tag, bool value)
+        public Filterer SetAllowed(string tag, bool value)
         {
             switch (_allTagsEnabledByDefault)
             {
@@ -49,6 +50,28 @@ namespace Appegy.UniLogger
                     _tags.Add(tag);
                     break;
             }
+
+            return this;
+        }
+
+        public Filterer Enable(LogLevel logLevel)
+        {
+            return SetAllowed(logLevel, true);
+        }
+
+        public Filterer Disable(LogLevel logLevel)
+        {
+            return SetAllowed(logLevel, false);
+        }
+
+        public Filterer Allow(string tag)
+        {
+            return SetAllowed(tag, true);
+        }
+
+        public Filterer Mute(string tag)
+        {
+            return SetAllowed(tag, false);
         }
     }
 }

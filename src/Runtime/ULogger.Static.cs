@@ -80,42 +80,24 @@ namespace Appegy.UniLogger
             return null;
         }
 
-        public static void AddTarget<T>(T target) where T : Target
+        public static LoggerConfig CreateConfig()
         {
-            if (target == null) throw new ArgumentNullException(nameof(target));
-            if (Data == null) throw new InvalidOperationException($"{nameof(ULogger)}.{nameof(Initialize)} must be called before adding targets.");
-            if (!Data.AddTarget(target))
-            {
-                throw new InvalidOperationException($"A target of type '{target.GetType().Name}' is already registered.");
-            }
+            return new LoggerConfig(new UnityTarget());
         }
 
-        public static bool RemoveTarget<T>() where T : Target
+        public static void Initialize()
         {
-            if (Data == null) return false;
-            var removed = Data.RemoveTarget(typeof(T));
-            if (removed == null) return false;
-            if (removed is IDisposable disposable)
-            {
-                disposable.Dispose();
-            }
-            else
-            {
-                removed.Flush();
-            }
-            return true;
+            Initialize(CreateConfig());
         }
 
-        public static void Initialize(Formatter unityFormatter = null, Filterer unityFilterer = null)
+        public static void Initialize(LoggerConfig config)
         {
-            // prepare default loggers and swap unity logger to custom
-            unityFormatter ??= new Formatter();
-            unityFilterer ??= new Filterer(true);
-            var unityTarget = new UnityTarget(unityFormatter, unityFilterer);
+            if (config == null) throw new ArgumentNullException(nameof(config));
             Data = new ULoggerData
             {
-                UnityTarget = unityTarget,
+                UnityTarget = config.ConsoleTarget,
                 LogHandler = new UnityLogger(Debug.unityLogger.logHandler),
+                Targets = config.BuildTargets(),
             };
             Debug.unityLogger.logHandler = Data.LogHandler;
             Application.logMessageReceivedThreaded += OnLogMessageReceivedThreaded;

@@ -6,19 +6,15 @@ namespace Appegy.UniLogger
     public abstract class TargetBase
     {
         [NotNull]
-        public Formatter Formatter { get; }
+        public Formatter Formatter { get; internal set; }
 
         [NotNull]
-        public Filterer Filterer { get; }
+        public Filterer Filterer { get; internal set; }
 
-        protected TargetBase() : this(null, null)
+        protected TargetBase()
         {
-        }
-
-        protected TargetBase([CanBeNull] Formatter formatter = null, [CanBeNull] Filterer filterer = null)
-        {
-            Formatter = formatter ?? new Formatter();
-            Filterer = filterer ?? new Filterer(true);
+            Formatter = new Formatter();
+            Filterer = new Filterer(true);
         }
     }
 
@@ -26,11 +22,7 @@ namespace Appegy.UniLogger
     {
         private readonly bool[] _stackTraceLogType;
 
-        protected Target() : this(null, null)
-        {
-        }
-
-        protected Target([CanBeNull] Formatter formatter = null, [CanBeNull] Filterer filterer = null) : base(formatter, filterer)
+        protected Target()
         {
             _stackTraceLogType = new bool[LogTypes.Count];
             foreach (var logType in LogTypes)
