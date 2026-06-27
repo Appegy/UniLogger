@@ -26,23 +26,5 @@ namespace Appegy.UniLogger
             _targets = updated;
             return true;
         }
-
-        public Target RemoveTarget(Type type)
-        {
-            var current = _targets;
-            for (var i = 0; i < current.Length; i++)
-            {
-                if (type.IsInstanceOfType(current[i]))
-                {
-                    var removed = current[i];
-                    var updated = new Target[current.Length - 1];
-                    Array.Copy(current, 0, updated, 0, i);
-                    Array.Copy(current, i + 1, updated, i, current.Length - i - 1);
-                    _targets = updated;
-                    return removed;
-                }
-            }
-            return null;
-        }
     }
 }

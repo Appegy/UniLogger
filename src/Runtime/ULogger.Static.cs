@@ -93,26 +93,6 @@ namespace Appegy.UniLogger
             }
         }
 
-        public static bool RemoveTarget<T>() where T : Target
-        {
-            ThreadDispatcher.EnsureMainThread(nameof(RemoveTarget));
-            if (Data == null) return false;
-            var removed = Data.RemoveTarget(typeof(T));
-            if (removed == null) return false;
-
-            Data.Dispatcher.Flush();
-
-            if (removed is IDisposable disposable)
-            {
-                disposable.Dispose();
-            }
-            else
-            {
-                removed.Flush();
-            }
-            return true;
-        }
-
         public static void Initialize(Formatter unityFormatter = null, Filterer unityFilterer = null)
         {
             ThreadDispatcher.EnsureMainThread(nameof(Initialize));
