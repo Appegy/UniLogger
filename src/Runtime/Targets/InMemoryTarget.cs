@@ -6,7 +6,7 @@ namespace Appegy.UniLogger
     {
         private readonly char[] _buffer;
         private readonly int _capacity;
-        private readonly object _gate = new object();
+        private readonly object _gate = new();
         private int _start;
         private int _count;
 

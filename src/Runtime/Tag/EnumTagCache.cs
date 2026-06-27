@@ -6,7 +6,7 @@ namespace Appegy.UniLogger
     internal static class EnumTagCache<TEnum>
         where TEnum : struct, Enum
     {
-        private static readonly ConcurrentDictionary<TEnum, string> _cache = new ConcurrentDictionary<TEnum, string>();
+        private static readonly ConcurrentDictionary<TEnum, string> _cache = new();
         private static readonly Func<TEnum, string> _resolve = Resolve;
 
         public static string Get(TEnum value)

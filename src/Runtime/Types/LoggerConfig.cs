@@ -8,9 +8,9 @@ namespace Appegy.UniLogger
     public class LoggerConfig
     {
         private const string KeyPrefix = nameof(ULogger) + ".Tags.";
-        private readonly ConcurrentDictionary<(string, LogLevel), bool> _loggingLevelCache = new ConcurrentDictionary<(string, LogLevel), bool>();
+        private readonly ConcurrentDictionary<(string, LogLevel), bool> _loggingLevelCache = new();
 
-        internal List<Target> Targets { get; } = new List<Target>();
+        internal List<Target> Targets { get; } = new();
 
         public Formatter UnityFormatter { get; internal set; }
 

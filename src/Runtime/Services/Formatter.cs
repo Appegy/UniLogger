@@ -11,7 +11,7 @@ namespace Appegy.UniLogger
         private const float TagColorValue = 0.8f;
         private const string HexDigits = "0123456789ABCDEF";
 
-        private static readonly ConcurrentDictionary<string, string> _tagColorHex = new ConcurrentDictionary<string, string>();
+        private static readonly ConcurrentDictionary<string, string> _tagColorHex = new();
         private static readonly Func<string, string> _tagColorFactory = ComputeTagColorHex;
 
         private FormatOptions _formatOptions;

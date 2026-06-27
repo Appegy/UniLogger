@@ -5,8 +5,8 @@ namespace Appegy.UniLogger
 {
     internal static class TagsHelper
     {
-        private static readonly Dictionary<Type, string> _tagTypesCache = new Dictionary<Type, string>();
-        private static readonly Dictionary<Enum, string> _tagEnumsCache = new Dictionary<Enum, string>();
+        private static readonly Dictionary<Type, string> _tagTypesCache = new();
+        private static readonly Dictionary<Enum, string> _tagEnumsCache = new();
 
         public static string GetTag(this object tag)
         {

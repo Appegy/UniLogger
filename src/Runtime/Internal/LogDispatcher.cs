@@ -7,7 +7,7 @@ namespace Appegy.UniLogger
     internal sealed class LogDispatcher : IDisposable
     {
         private readonly ULoggerData _data;
-        private readonly BlockingCollection<LogRecord> _queue = new BlockingCollection<LogRecord>();
+        private readonly BlockingCollection<LogRecord> _queue = new();
         private readonly Thread _thread;
         private volatile bool _completed;
 
