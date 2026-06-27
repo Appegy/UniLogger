@@ -187,7 +187,6 @@ namespace Appegy.UniLogger
         {
             if (Data == null) return;
             Data.LogHandler.Default.LogException(e.Exception.InnerException ?? e.Exception);
-            Flush();
         }
 
         public static void Flush()
