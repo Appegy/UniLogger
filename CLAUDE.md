@@ -16,7 +16,7 @@
 
 Use whatever Unity MCP the session exposes (Unity Assistant, Copilot bridge, etc.); tool names differ between them, so check what's available.
 
-**After EVERY C# change (create, edit, move, delete)**: recompile/refresh, then read the console. Fix your errors and warnings before anything else.
+**After EVERY C# change (create, edit, move, delete)**: recompile/refresh, then read the console. Fix your errors and warnings before anything else. Wait until `EditorApplication.isCompiling` is false before trusting the console (an earlier read is stale), and on API changes verify the whole project (Lab/`Assembly-CSharp`), not just the package.
 
 At start: read the console once to confirm MCP is connected. If not, tell the user once, keep trying each change.
 

@@ -1,49 +1,77 @@
-using System;
+﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace Appegy.UniLogger
 {
     public class LoggerConfig
     {
-        private readonly TargetConfig _console;
-        private readonly List<TargetConfig> _targets = new List<TargetConfig>();
+        private const string KeyPrefix = nameof(ULogger) + ".Tags.";
+        private readonly ConcurrentDictionary<(string, LogLevel), bool> _loggingLevelCache = new ConcurrentDictionary<(string, LogLevel), bool>();
 
-        internal LoggerConfig(UnityTarget console)
+        internal List<Target> Targets { get; } = new List<Target>();
+
+        public Formatter UnityFormatter { get; internal set; }
+
+        public LoggerConfig AddTarget(Target target)
         {
-            _console = new TargetConfig(console);
+            Targets.Add(target);
+            return this;
         }
 
-        public TargetConfig Console()
+        public bool IsTagEnabled<TLoggerType>(TLoggerType tag, LogLevel type)
+            where TLoggerType : struct, Enum
         {
-            return _console;
+            return IsTagEnabled(tag.GetTag(), type);
         }
 
-        public TargetConfig AddTarget<T>(T target) where T : Target
+        public bool IsTagEnabled(Type tag, LogLevel type)
         {
-            if (target == null) throw new ArgumentNullException(nameof(target));
-            var type = target.GetType();
-            foreach (var existing in _targets)
+            return IsTagEnabled(tag.GetTag(), type);
+        }
+
+        public bool IsTagEnabled(string tag, LogLevel type)
+        {
+            var key = (tag, type);
+            if (!_loggingLevelCache.TryGetValue(key, out var supported))
             {
-                if (existing.Target.GetType() == type)
-                {
-                    throw new InvalidOperationException($"A target of type '{type.Name}' is already registered.");
-                }
+                supported = ReadFromPrefs(tag, type);
+                _loggingLevelCache[key] = supported;
             }
-            var config = new TargetConfig(target);
-            _targets.Add(config);
-            return config;
+            return supported;
         }
 
-        internal UnityTarget ConsoleTarget => (UnityTarget)_console.Target;
-
-        internal Target[] BuildTargets()
+        public void SetTagEnabled<TLoggerType>(TLoggerType tag, LogLevel type, bool enabled)
+            where TLoggerType : struct, Enum
         {
-            var result = new Target[_targets.Count];
-            for (var i = 0; i < _targets.Count; i++)
+            SetTagEnabled(tag.GetTag(), type, enabled);
+        }
+
+        public void SetTagEnabled(Type tag, LogLevel type, bool enabled)
+        {
+            SetTagEnabled(tag.GetTag(), type, enabled);
+        }
+
+        public void SetTagEnabled(string tag, LogLevel type, bool enabled)
+        {
+            var key = (tag, level: type);
+            if (_loggingLevelCache.TryGetValue(key, out var current) && current == enabled)
             {
-                result[i] = (Target)_targets[i].Target;
+                return;
             }
-            return result;
+            _loggingLevelCache[key] = enabled;
+            WriteToPrefs(tag, type, enabled);
+        }
+
+        private static bool ReadFromPrefs(string tag, LogLevel type)
+        {
+            return PlayerPrefs.GetInt(KeyPrefix + tag + "." + type, 1) == 1;
+        }
+
+        private static void WriteToPrefs(string tag, LogLevel type, bool enabled)
+        {
+            PlayerPrefs.SetInt(KeyPrefix + tag + "." + type, enabled ? 1 : 0);
         }
     }
 }

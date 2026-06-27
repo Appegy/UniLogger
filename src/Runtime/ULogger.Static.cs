@@ -80,24 +80,41 @@ namespace Appegy.UniLogger
             return null;
         }
 
-        public static LoggerConfig CreateConfig()
+        public static void AddTarget<T>(T target) where T : Target
         {
-            return new LoggerConfig(new UnityTarget());
+            if (target == null) throw new ArgumentNullException(nameof(target));
+            if (Data == null) throw new InvalidOperationException($"{nameof(ULogger)}.{nameof(Initialize)} must be called before adding targets.");
+            if (!Data.AddTarget(target))
+            {
+                throw new InvalidOperationException($"A target of type '{target.GetType().Name}' is already registered.");
+            }
         }
 
-        public static void Initialize()
+        public static bool RemoveTarget<T>() where T : Target
         {
-            Initialize(CreateConfig());
+            if (Data == null) return false;
+            var removed = Data.RemoveTarget(typeof(T));
+            if (removed == null) return false;
+            if (removed is IDisposable disposable)
+            {
+                disposable.Dispose();
+            }
+            else
+            {
+                removed.Flush();
+            }
+            return true;
         }
 
-        public static void Initialize(LoggerConfig config)
+        public static void Initialize(Formatter unityFormatter = null, Filterer unityFilterer = null)
         {
-            if (config == null) throw new ArgumentNullException(nameof(config));
+            unityFormatter ??= new Formatter();
+            unityFilterer ??= new Filterer(true);
+            var unityTarget = new UnityTarget(unityFormatter, unityFilterer);
             Data = new ULoggerData
             {
-                UnityTarget = config.ConsoleTarget,
+                UnityTarget = unityTarget,
                 LogHandler = new UnityLogger(Debug.unityLogger.logHandler),
-                Targets = config.BuildTargets(),
             };
             Debug.unityLogger.logHandler = Data.LogHandler;
             Application.logMessageReceivedThreaded += OnLogMessageReceivedThreaded;
