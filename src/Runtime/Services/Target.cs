@@ -35,12 +35,13 @@ namespace Appegy.UniLogger
             _stackTraceLogType = new bool[LogTypes.Count];
             foreach (var logType in LogTypes)
             {
-                SetStackTraceEnabled(logType, true);
+                _stackTraceLogType[(int)logType] = true;
             }
         }
 
         public void SetStackTraceEnabled(LogLevel logLevel, bool enabled)
         {
+            ThreadDispatcher.EnsureMainThread(nameof(SetStackTraceEnabled));
             _stackTraceLogType[(int)logLevel] = enabled;
         }
 
