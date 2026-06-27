@@ -1,6 +1,9 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace Appegy.UniLogger
 {
@@ -27,10 +30,13 @@ namespace Appegy.UniLogger
                 return;
             }
 
+            var logTime = DateTime.Now;
+            var threadId = Thread.CurrentThread.ManagedThreadId;
+
             // means it is possible to send log to Unity, catch using Application.logMessageReceivedThreaded and broadcast to other targets
             if (WillBeAllowedByFilterer(Data.UnityTarget.Filterer, logLevel, _tags))
             {
-                var line = new LogEntry(FilterTags(_tags, Data.UnityTarget.Filterer, logLevel), logLevel, message, color, context);
+                var line = new LogEntry(FilterTags(_tags, Data.UnityTarget.Filterer, logLevel), logLevel, message, color, context, logTime, threadId);
                 var formattedMessage = Data.UnityTarget.Formatter.Format(line);
 
                 // manually extract stack trace if stack it disabled by unity (or we are in separate thread) but some target needs it
@@ -51,6 +57,8 @@ namespace Appegy.UniLogger
                     ManualStacktrace = manualStacktrace,
                     Color = color,
                     Context = context,
+                    LogTime = logTime,
+                    ThreadId = threadId,
                 };
                 Data.LogHandler.Default.Log(logLevel.ConvertToLogType(), (object)formattedMessage, context);
                 _pending = null;
@@ -74,7 +82,7 @@ namespace Appegy.UniLogger
                 }
                 if (allowedByAnyFilterer)
                 {
-                    BroadcastLog(Data, _tags, logLevel, message, manualStacktrace, color, context);
+                    Data.Dispatcher.Enqueue(new LogRecord(_tags, logLevel, message, manualStacktrace, color, context, logTime, threadId));
                 }
             }
         }
@@ -95,22 +103,22 @@ namespace Appegy.UniLogger
         {
             if (Data == null) return;
             var logLevel = type.ConvertToLogLevel();
-            BroadcastLog(Data, _tags, logLevel, message, stacktrace, default, default);
+            Data.Dispatcher.Enqueue(new LogRecord(_tags, logLevel, message, stacktrace, default, default, DateTime.Now, Thread.CurrentThread.ManagedThreadId));
         }
 
-        private static void BroadcastLog(ULoggerData data, IReadOnlyList<string> tags, LogLevel logLevel, string message, string stackTrace, Color color, Object context)
+        internal static void Deliver(ULoggerData data, in LogRecord record)
         {
             foreach (var target in data.Targets)
             {
-                if (!WillBeAllowedByFilterer(target.Filterer, logLevel, tags))
+                if (!WillBeAllowedByFilterer(target.Filterer, record.LogLevel, record.Tags))
                 {
                     continue;
                 }
                 try
                 {
-                    var line = new LogEntry(FilterTags(tags, target.Filterer, logLevel), logLevel, message, color, context);
+                    var line = new LogEntry(FilterTags(record.Tags, target.Filterer, record.LogLevel), record.LogLevel, record.Message, record.Color, record.Context, record.LogTime, record.ThreadId);
                     var formattedMessage = target.Formatter.Format(line);
-                    var targetStackTrace = target.GetStackTraceEnabled(line.LogLevel) ? stackTrace : null;
+                    var targetStackTrace = target.GetStackTraceEnabled(record.LogLevel) ? record.StackTrace : null;
                     target.Log(formattedMessage, targetStackTrace);
                 }
                 catch

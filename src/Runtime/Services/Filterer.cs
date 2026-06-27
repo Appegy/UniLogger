@@ -1,22 +1,34 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using static Appegy.UniLogger.LogLevelExtensions;
 
 namespace Appegy.UniLogger
 {
     public class Filterer
     {
-        private readonly bool[] _logTypeEnabled;
+        private sealed class Snapshot
+        {
+            public readonly bool[] LogTypeEnabled;
+            public readonly HashSet<string> Tags;
+
+            public Snapshot(bool[] logTypeEnabled, HashSet<string> tags)
+            {
+                LogTypeEnabled = logTypeEnabled;
+                Tags = tags;
+            }
+        }
+
         private readonly bool _allTagsEnabledByDefault;
-        private readonly HashSet<string> _tags = new HashSet<string>();
+        private volatile Snapshot _snapshot;
 
         public Filterer(bool allTagsEnabledByDefault)
         {
             _allTagsEnabledByDefault = allTagsEnabledByDefault;
-            _logTypeEnabled = new bool[LogTypes.Count];
+            var logTypeEnabled = new bool[LogTypes.Count];
             foreach (var logType in LogTypes)
             {
-                _logTypeEnabled[(int)logType] = true;
+                logTypeEnabled[(int)logType] = true;
             }
+            _snapshot = new Snapshot(logTypeEnabled, new HashSet<string>());
         }
 
         /// <summary>
@@ -24,33 +36,44 @@ namespace Appegy.UniLogger
         /// </summary>
         public bool IsAllowed(LogLevel logLevel, string tag)
         {
-            if (!_logTypeEnabled[(int)logLevel]) return false;
+            var snapshot = _snapshot;
+            if (!snapshot.LogTypeEnabled[(int)logLevel]) return false;
             return _allTagsEnabledByDefault switch
             {
-                true => !_tags.Contains(tag),
-                false => _tags.Contains(tag)
+                true => !snapshot.Tags.Contains(tag),
+                false => snapshot.Tags.Contains(tag)
             };
         }
 
         public Filterer SetAllowed(LogLevel logLevel, bool value)
         {
-            _logTypeEnabled[(int)logLevel] = value;
+            ThreadDispatcher.EnsureMainThread(nameof(SetAllowed));
+            var snapshot = _snapshot;
+            var logTypeEnabled = (bool[])snapshot.LogTypeEnabled.Clone();
+            logTypeEnabled[(int)logLevel] = value;
+            _snapshot = new Snapshot(logTypeEnabled, snapshot.Tags);
             return this;
         }
 
         public Filterer SetAllowed(string tag, bool value)
         {
-            switch (_allTagsEnabledByDefault)
+            ThreadDispatcher.EnsureMainThread(nameof(SetAllowed));
+            var snapshot = _snapshot;
+            var removeFromSet = _allTagsEnabledByDefault == value;
+            if (removeFromSet ? !snapshot.Tags.Contains(tag) : snapshot.Tags.Contains(tag))
             {
-                case true when value:
-                case false when !value:
-                    _tags.Remove(tag);
-                    break;
-                default:
-                    _tags.Add(tag);
-                    break;
+                return this;
             }
-
+            var tags = new HashSet<string>(snapshot.Tags);
+            if (removeFromSet)
+            {
+                tags.Remove(tag);
+            }
+            else
+            {
+                tags.Add(tag);
+            }
+            _snapshot = new Snapshot(snapshot.LogTypeEnabled, tags);
             return this;
         }
 

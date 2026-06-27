@@ -28,7 +28,7 @@ namespace Appegy.UniLogger
             string path,
             long fileSizeLimitBytes = 0,
             int retainedFileCountLimit = 0,
-            bool autoFlush = true,
+            bool autoFlush = false,
             Formatter formatter = null,
             Filterer filterer = null)
             : base(formatter, filterer)
@@ -82,7 +82,15 @@ namespace Appegy.UniLogger
 
         protected internal override void Flush()
         {
-            FlushWriter();
+            if (_disposed || _writer == null) return;
+            try
+            {
+                _writer.Flush();
+            }
+            catch
+            {
+                // never throw from logging
+            }
         }
 
         public string[] GetLogFiles()
@@ -129,19 +137,6 @@ namespace Appegy.UniLogger
             }
 
             ApplyRetention();
-        }
-
-        private void FlushWriter()
-        {
-            if (_disposed || _writer == null) return;
-            try
-            {
-                _writer.Flush();
-            }
-            catch
-            {
-                // never throw from logging
-            }
         }
 
         private void CloseWriter()

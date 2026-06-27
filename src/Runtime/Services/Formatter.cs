@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.Text;
 using UnityEngine;
 
@@ -11,9 +11,20 @@ namespace Appegy.UniLogger
         private const float TagColorValue = 0.8f;
         private const string HexDigits = "0123456789ABCDEF";
 
-        private static readonly Dictionary<string, string> _tagColorHex = new Dictionary<string, string>();
+        private static readonly ConcurrentDictionary<string, string> _tagColorHex = new();
+        private static readonly Func<string, string> _tagColorFactory = ComputeTagColorHex;
 
-        public FormatOptions FormatOptions { get; set; }
+        private FormatOptions _formatOptions;
+
+        public FormatOptions FormatOptions
+        {
+            get => _formatOptions;
+            set
+            {
+                ThreadDispatcher.EnsureMainThread(nameof(FormatOptions));
+                _formatOptions = value;
+            }
+        }
 
         private bool AnyFormat => FormatOptions != FormatOptions.None;
         private bool RichText => FormatOptions.HasFlagFast(FormatOptions.RichText);
@@ -24,7 +35,7 @@ namespace Appegy.UniLogger
 
         public Formatter(FormatOptions options = FormatOptions.None)
         {
-            FormatOptions = options;
+            _formatOptions = options;
         }
 
         public string Format(LogEntry line)
@@ -148,17 +159,14 @@ namespace Appegy.UniLogger
 
         private static string GetTagColorHex(string tag)
         {
-            lock (_tagColorHex)
-            {
-                if (_tagColorHex.TryGetValue(tag, out var hex)) return hex;
+            return _tagColorHex.GetOrAdd(tag, _tagColorFactory);
+        }
 
-                var hue = (StableHash(tag) & 0xFFFFFF) / (float)0x1000000;
-                var color = Color.HSVToRGB(hue, TagColorSaturation, TagColorValue);
-                hex = ColorUtility.ToHtmlStringRGBA(color);
-
-                _tagColorHex[tag] = hex;
-                return hex;
-            }
+        private static string ComputeTagColorHex(string tag)
+        {
+            var hue = (StableHash(tag) & 0xFFFFFF) / (float)0x1000000;
+            var color = Color.HSVToRGB(hue, TagColorSaturation, TagColorValue);
+            return ColorUtility.ToHtmlStringRGBA(color);
         }
 
         private static uint StableHash(string tag)

@@ -19,6 +19,11 @@ namespace Appegy.UniLogger
         public readonly bool IsColored;
 
         public LogEntry(IReadOnlyList<string> tags, LogLevel logLevel, string message, Color color, Object context)
+            : this(tags, logLevel, message, color, context, DateTime.Now, Thread.CurrentThread.ManagedThreadId)
+        {
+        }
+
+        internal LogEntry(IReadOnlyList<string> tags, LogLevel logLevel, string message, Color color, Object context, DateTime logTime, int threadId)
         {
             Tags = tags;
             LogLevel = logLevel;
@@ -26,8 +31,8 @@ namespace Appegy.UniLogger
             Color = color;
             Context = context;
 
-            LogTime = DateTime.Now;
-            ThreadId = Thread.CurrentThread.ManagedThreadId;
+            LogTime = logTime;
+            ThreadId = threadId;
             IsColored = color != default;
         }
     }

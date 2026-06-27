@@ -6,6 +6,7 @@ namespace Appegy.UniLogger
     {
         private readonly char[] _buffer;
         private readonly int _capacity;
+        private readonly object _gate = new();
         private int _start;
         private int _count;
 
@@ -19,33 +20,42 @@ namespace Appegy.UniLogger
 
         protected internal override void Log(string message, string stackTrace)
         {
-            Append(message);
-            if (!string.IsNullOrEmpty(stackTrace))
+            lock (_gate)
             {
+                Append(message);
+                if (!string.IsNullOrEmpty(stackTrace))
+                {
+                    Append("\n");
+                    Append(stackTrace);
+                }
                 Append("\n");
-                Append(stackTrace);
             }
-            Append("\n");
         }
 
         public string GetContent()
         {
-            if (_count == 0) return string.Empty;
-            var firstChunk = Math.Min(_count, _capacity - _start);
-            if (firstChunk == _count)
+            lock (_gate)
             {
-                return new string(_buffer, _start, _count);
+                if (_count == 0) return string.Empty;
+                var firstChunk = Math.Min(_count, _capacity - _start);
+                if (firstChunk == _count)
+                {
+                    return new string(_buffer, _start, _count);
+                }
+                var result = new char[_count];
+                Array.Copy(_buffer, _start, result, 0, firstChunk);
+                Array.Copy(_buffer, 0, result, firstChunk, _count - firstChunk);
+                return new string(result);
             }
-            var result = new char[_count];
-            Array.Copy(_buffer, _start, result, 0, firstChunk);
-            Array.Copy(_buffer, 0, result, firstChunk, _count - firstChunk);
-            return new string(result);
         }
 
         public void Clear()
         {
-            _start = 0;
-            _count = 0;
+            lock (_gate)
+            {
+                _start = 0;
+                _count = 0;
+            }
         }
 
         private void Append(string text)

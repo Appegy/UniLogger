@@ -8,7 +8,7 @@ namespace Appegy.UniLogger
         private const int MaxCapacity = 2000;
         private const int InitialCapacity = 100;
 
-        private static readonly ConcurrentBag<StringBuilder> _objects = new ConcurrentBag<StringBuilder>();
+        private static readonly ConcurrentBag<StringBuilder> _objects = new();
 
         public static StringBuilder GetBuilder()
         {
