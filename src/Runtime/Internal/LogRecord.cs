@@ -30,12 +30,12 @@ namespace Appegy.UniLogger
             Exception = null;
         }
 
-        public LogRecord(Exception exception)
+        public LogRecord(Exception exception, string message)
         {
             Exception = exception;
+            Message = message;
             Tags = null;
             LogLevel = default;
-            Message = null;
             StackTrace = null;
             Color = default;
             Context = null;

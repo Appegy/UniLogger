@@ -80,9 +80,9 @@ namespace Appegy.UniLogger
             }
         }
 
-        protected internal override void LogException(Exception exception)
+        protected internal override void LogException(Exception exception, string message)
         {
-            Log(exception.ToString(), null);
+            Log(message, null);
         }
 
         protected internal override void Flush()

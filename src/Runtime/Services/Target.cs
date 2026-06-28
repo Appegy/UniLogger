@@ -53,7 +53,7 @@ namespace Appegy.UniLogger
 
         protected internal abstract void Log(string message, [CanBeNull] string stackTrace);
 
-        protected internal abstract void LogException([NotNull] Exception exception);
+        protected internal abstract void LogException([NotNull] Exception exception, string message);
 
         protected internal virtual void Flush()
         {

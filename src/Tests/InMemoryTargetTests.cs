@@ -51,9 +51,9 @@ namespace Appegy.UniLogger
         {
             var target = new InMemoryTarget(256);
 
-            target.LogException(new System.InvalidOperationException("boom"));
+            target.LogException(new System.InvalidOperationException("ignored"), "formatted exception text");
 
-            target.GetContent().Should().Contain("boom");
+            target.GetContent().Should().Contain("formatted exception text");
         }
 
         [Test]

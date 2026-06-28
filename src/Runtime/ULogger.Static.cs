@@ -162,8 +162,9 @@ namespace Appegy.UniLogger
         internal static void EnqueueException(Exception exception)
         {
             var data = Data;
-            if (data == null) return;
-            data.Dispatcher.Enqueue(new LogRecord(exception));
+            if (data == null || data.Targets.Length == 0) return;
+            var message = UnityExceptionFormatter.Format(exception);
+            data.Dispatcher.Enqueue(new LogRecord(exception, message));
         }
 
         #region GetLogger

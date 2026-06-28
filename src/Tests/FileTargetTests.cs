@@ -56,10 +56,10 @@ namespace Appegy.UniLogger
         {
             using var target = new FileTarget(Path.Combine(_directory, "game.log"));
 
-            target.LogException(new InvalidOperationException("boom"));
+            target.LogException(new InvalidOperationException("ignored"), "formatted exception text");
             target.Flush();
 
-            File.ReadAllText(target.CurrentFilePath).Should().Contain("boom");
+            File.ReadAllText(target.CurrentFilePath).Should().Contain("formatted exception text");
         }
 
         [Test]

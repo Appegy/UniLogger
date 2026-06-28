@@ -114,7 +114,7 @@ namespace Appegy.UniLogger
                 {
                     try
                     {
-                        target.LogException(record.Exception);
+                        target.LogException(record.Exception, record.Message);
                     }
                     catch
                     {

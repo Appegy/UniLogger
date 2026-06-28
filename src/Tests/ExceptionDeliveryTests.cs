@@ -10,6 +10,7 @@ namespace Appegy.UniLogger
         {
             public string LastMessage;
             public Exception LastException;
+            public string LastExceptionMessage;
 
             public RecordingTarget(Formatter formatter = null, Filterer filterer = null)
                 : base(formatter, filterer)
@@ -21,23 +22,25 @@ namespace Appegy.UniLogger
                 LastMessage = message;
             }
 
-            protected internal override void LogException(Exception exception)
+            protected internal override void LogException(Exception exception, string message)
             {
                 LastException = exception;
+                LastExceptionMessage = message;
             }
         }
 
         [Test]
-        public void WhenExceptionDelivered_ThanTargetReceivesSameInstance()
+        public void WhenExceptionDelivered_ThanTargetReceivesSameInstanceAndMessage()
         {
             var data = new ULoggerData();
             var target = new RecordingTarget();
             data.AddTarget(target);
 
             var exception = new InvalidOperationException("boom");
-            ULogger.Deliver(data, new LogRecord(exception));
+            ULogger.Deliver(data, new LogRecord(exception, "formatted text"));
 
             target.LastException.Should().BeSameAs(exception);
+            target.LastExceptionMessage.Should().Be("formatted text");
         }
 
         [Test]
@@ -48,7 +51,7 @@ namespace Appegy.UniLogger
             data.AddTarget(target);
 
             var exception = new InvalidOperationException("boom");
-            ULogger.Deliver(data, new LogRecord(exception));
+            ULogger.Deliver(data, new LogRecord(exception, "formatted text"));
 
             target.LastException.Should().BeSameAs(exception);
         }
@@ -60,7 +63,7 @@ namespace Appegy.UniLogger
             var target = new RecordingTarget();
             data.AddTarget(target);
 
-            ULogger.Deliver(data, new LogRecord(new Exception("boom")));
+            ULogger.Deliver(data, new LogRecord(new Exception("boom"), "formatted text"));
 
             target.LastMessage.Should().BeNull();
         }
