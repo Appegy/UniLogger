@@ -1,3 +1,4 @@
+using System.Text;
 using UnityEngine;
 
 namespace Appegy.UniLogger.Example
@@ -11,12 +12,14 @@ namespace Appegy.UniLogger.Example
 
         private InMemoryTarget _target;
         private string _content = string.Empty;
+        private string _display = string.Empty;
         private int _lineCount;
         private float _nextRefresh;
 
         private bool _visible = true;
         private bool _expanded = true;
         private bool _tail = true;
+        private bool _showTrace = true;
         private bool _resizing;
         private Vector2 _scroll;
         private Rect _window;
@@ -37,13 +40,6 @@ namespace Appegy.UniLogger.Example
         private GUIStyle _gripStyle;
         private GUIStyle _showStyle;
 
-        public static InMemoryLogOverlay Spawn()
-        {
-            var go = new GameObject("[UniLogger Overlay]") { hideFlags = HideFlags.HideAndDontSave };
-            DontDestroyOnLoad(go);
-            return go.AddComponent<InMemoryLogOverlay>();
-        }
-
         private void Update()
         {
             if (IsTogglePressed())
@@ -61,14 +57,20 @@ namespace Appegy.UniLogger.Example
             var previousLength = _content.Length;
             _content = _target != null ? _target.GetContent() : string.Empty;
             _lineCount = CountLines(_content);
+            RebuildDisplay();
             if (_tail && _content.Length != previousLength) _scroll.y = float.MaxValue;
+        }
+
+        private void RebuildDisplay()
+        {
+            _display = Stylize(_content, StackFontSize());
         }
 
         private void OnGUI()
         {
             EnsureResources();
 
-            var scale = Mathf.Clamp(Screen.height / ReferenceHeight, 0.85f, 3f);
+            var scale = Scale();
             ApplyScale(scale);
 
             var area = SafeArea();
@@ -93,7 +95,7 @@ namespace Appegy.UniLogger.Example
 
         private void DrawWindow(int id)
         {
-            var scale = Mathf.Clamp(Screen.height / ReferenceHeight, 0.85f, 3f);
+            var scale = Scale();
             var titleHeight = Mathf.Round(26f * scale);
             var glyph = Mathf.Round(30f * scale);
 
@@ -104,6 +106,12 @@ namespace Appegy.UniLogger.Example
             }
             GUILayout.Label(_lineCount > 0 ? $"UniLogger  ·  {_lineCount} lines" : "UniLogger", _titleTextStyle);
             GUILayout.FlexibleSpace();
+            var showTrace = GUILayout.Toggle(_showTrace, "Trace", _showTrace ? _toggleOnStyle : _buttonStyle, GUILayout.Width(glyph * 2.1f));
+            if (showTrace != _showTrace)
+            {
+                _showTrace = showTrace;
+                RebuildDisplay();
+            }
             _tail = GUILayout.Toggle(_tail, "Tail", _tail ? _toggleOnStyle : _buttonStyle, GUILayout.Width(glyph * 1.9f));
             if (GUILayout.Button("Copy", _buttonStyle, GUILayout.Width(glyph * 1.9f)))
             {
@@ -123,14 +131,7 @@ namespace Appegy.UniLogger.Example
             if (_expanded)
             {
                 _scroll = GUILayout.BeginScrollView(_scroll, false, true);
-                if (_content.Length == 0)
-                {
-                    GUILayout.Label("No log entries yet.", _logStyle);
-                }
-                else
-                {
-                    GUILayout.Label(_content, _logStyle);
-                }
+                GUILayout.Label(_display.Length == 0 ? "No log entries yet." : _display, _logStyle);
                 GUILayout.EndScrollView();
 
                 HandleResize(scale);
@@ -197,6 +198,44 @@ namespace Appegy.UniLogger.Example
             window.height = Mathf.Min(window.height, area.height);
             window.x = Mathf.Clamp(window.x, area.x, area.xMax - window.width);
             window.y = Mathf.Clamp(window.y, area.y, area.yMax - window.height);
+        }
+
+        private float Scale()
+        {
+            return Mathf.Clamp(Screen.height / ReferenceHeight, 0.85f, 3f);
+        }
+
+        private int StackFontSize()
+        {
+            return Mathf.Max(8, Mathf.RoundToInt(13f * Scale() * 0.72f));
+        }
+
+        private string Stylize(string content, int stackSize)
+        {
+            if (string.IsNullOrEmpty(content)) return string.Empty;
+            var builder = new StringBuilder(content.Length + 64);
+            var lineStart = 0;
+            for (var i = 0; i <= content.Length; i++)
+            {
+                if (i != content.Length && content[i] != '\n') continue;
+                var length = i - lineStart;
+                if (length > 0 && content[lineStart] == '[')
+                {
+                    builder.Append(content, lineStart, length).Append('\n');
+                }
+                else if (length > 0 && _showTrace)
+                {
+                    builder.Append("<size=").Append(stackSize).Append("><color=#8a9098>");
+                    builder.Append(content, lineStart, length);
+                    builder.Append("</color></size>\n");
+                }
+                else if (length == 0 && _showTrace)
+                {
+                    builder.Append('\n');
+                }
+                lineStart = i + 1;
+            }
+            return builder.ToString();
         }
 
         private static int CountLines(string text)

@@ -56,10 +56,9 @@ namespace Appegy.UniLogger.Example
 
         private static void InitializeInMemoryTarget()
         {
-            // Keep the most recent formatted logs in memory and show them in the on-screen overlay
+            // Keep the most recent formatted logs in memory; the InMemoryLogOverlay component shows them on screen
             var formatter = new Formatter(FormatOptions.RichText | FormatOptions.Time | FormatOptions.Tags | FormatOptions.LogType);
             ULogger.AddTarget(new InMemoryTarget(32 * 1024, formatter));
-            InMemoryLogOverlay.Spawn();
         }
     }
 }
