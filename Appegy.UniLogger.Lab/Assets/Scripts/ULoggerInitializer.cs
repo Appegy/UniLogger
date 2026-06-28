@@ -20,9 +20,8 @@ namespace Appegy.UniLogger.Example
             // Initialize ULogger and the unity console target
             InitializeUnityTarget();
 
-            // Mirror logs into a rolling file and an on-screen overlay
+            // Mirror logs into a rolling file
             InitializeFileTarget();
-            InitializeInMemoryTarget();
         }
 
         private static void InitializeUnityTarget()
@@ -52,13 +51,6 @@ namespace Appegy.UniLogger.Example
             var path = Path.Combine(Application.dataPath, "..", "Logs", "game.log");
             var formatter = new Formatter(FormatOptions.Time | FormatOptions.Tags | FormatOptions.LogType);
             ULogger.AddTarget(new FileTarget(path, fileSizeLimitBytes: 1024 * 1024, retainedFileCountLimit: 5, formatter: formatter));
-        }
-
-        private static void InitializeInMemoryTarget()
-        {
-            // Keep the most recent formatted logs in memory; the InMemoryLogOverlay component shows them on screen
-            var formatter = new Formatter(FormatOptions.RichText | FormatOptions.Time | FormatOptions.Tags | FormatOptions.LogType);
-            ULogger.AddTarget(new InMemoryTarget(32 * 1024, formatter));
         }
     }
 }
