@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+using System.IO;
+using UnityEngine;
 
 namespace Appegy.UniLogger.Example
 {
@@ -16,11 +17,12 @@ namespace Appegy.UniLogger.Example
                 Application.SetStackTraceLogType(LogType.Assert, StackTraceLogType.ScriptOnly);
             }
 
-            // Initialize ULogger and unity target
+            // Initialize ULogger and the unity console target
             InitializeUnityTarget();
 
-            // Add file target (currently FileTarget still in development and not fully tested yet)
-            // InitializeFileTarget();
+            // Mirror logs into a rolling file and an on-screen overlay
+            InitializeFileTarget();
+            InitializeInMemoryTarget();
         }
 
         private static void InitializeUnityTarget()
@@ -42,6 +44,22 @@ namespace Appegy.UniLogger.Example
 
             // When formatter and filterer are ready - initialize logger
             ULogger.Initialize(formatter, filterer);
+        }
+
+        private static void InitializeFileTarget()
+        {
+            // Rolling log files in Appegy.UniLogger.Lab/Logs (next to the Assets folder)
+            var path = Path.Combine(Application.dataPath, "..", "Logs", "game.log");
+            var formatter = new Formatter(FormatOptions.Time | FormatOptions.Tags | FormatOptions.LogType);
+            ULogger.AddTarget(new FileTarget(path, fileSizeLimitBytes: 1024 * 1024, retainedFileCountLimit: 5, formatter: formatter));
+        }
+
+        private static void InitializeInMemoryTarget()
+        {
+            // Keep the most recent formatted logs in memory and show them in the on-screen overlay
+            var formatter = new Formatter(FormatOptions.RichText | FormatOptions.Time | FormatOptions.Tags | FormatOptions.LogType);
+            ULogger.AddTarget(new InMemoryTarget(32 * 1024, formatter));
+            InMemoryLogOverlay.Spawn();
         }
     }
 }
