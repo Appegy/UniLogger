@@ -32,6 +32,11 @@ namespace Appegy.UniLogger
             }
         }
 
+        protected internal override void LogException(Exception exception)
+        {
+            Log(exception.ToString(), null);
+        }
+
         public string GetContent()
         {
             lock (_gate)

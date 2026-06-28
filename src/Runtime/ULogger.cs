@@ -108,6 +108,22 @@ namespace Appegy.UniLogger
 
         internal static void Deliver(ULoggerData data, in LogRecord record)
         {
+            if (record.Exception != null)
+            {
+                foreach (var target in data.Targets)
+                {
+                    try
+                    {
+                        target.LogException(record.Exception);
+                    }
+                    catch
+                    {
+                        // just don't fail on log
+                    }
+                }
+                return;
+            }
+
             foreach (var target in data.Targets)
             {
                 if (!WillBeAllowedByFilterer(target.Filterer, record.LogLevel, record.Tags))

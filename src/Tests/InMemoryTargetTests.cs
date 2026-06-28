@@ -47,6 +47,16 @@ namespace Appegy.UniLogger
         }
 
         [Test]
+        public void WhenExceptionLogged_ThanItIsWrittenAsText()
+        {
+            var target = new InMemoryTarget(256);
+
+            target.LogException(new System.InvalidOperationException("boom"));
+
+            target.GetContent().Should().Contain("boom");
+        }
+
+        [Test]
         public void WhenCleared_ThanContentIsEmpty()
         {
             var target = new InMemoryTarget(16);

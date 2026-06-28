@@ -351,7 +351,7 @@ namespace Appegy.UniLogger
         {
             if (Data != null)
             {
-                Data.LogHandler.Default.LogException(exception, context);
+                Data.LogHandler.LogException(exception, context);
             }
             else
             {
