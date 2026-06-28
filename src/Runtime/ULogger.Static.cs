@@ -163,8 +163,19 @@ namespace Appegy.UniLogger
         {
             var data = Data;
             if (data == null || data.Targets.Length == 0 || exception == null) return;
+            exception = UnwrapAggregate(exception);
             var message = UnityExceptionFormatter.Format(exception);
             data.Dispatcher.Enqueue(new LogRecord(exception, message));
+        }
+
+        private static Exception UnwrapAggregate(Exception exception)
+        {
+            if (exception is AggregateException aggregate)
+            {
+                var inner = aggregate.Flatten().InnerExceptions;
+                if (inner.Count == 1) return inner[0];
+            }
+            return exception;
         }
 
         #region GetLogger
