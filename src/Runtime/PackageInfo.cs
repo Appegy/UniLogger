@@ -1,6 +1,7 @@
 using System.Runtime.CompilerServices;
 
 [assembly: InternalsVisibleTo("Appegy.UniLogger.Tests")]
+[assembly: InternalsVisibleTo("Appegy.UniLogger.Editor")]
 
 namespace Appegy.UniLogger
 {

@@ -24,8 +24,9 @@ namespace Appegy.UniLogger
 
         private static readonly Regex FrameWithLocation = new Regex(@"\(at (Assets[^:)\n]+):(\d+)\)", RegexOptions.Compiled);
 
-        private static bool _initialized;
-        private static bool _available;
+        private static bool _reflectionReady;
+        private static bool _reflectionAvailable;
+        private static bool _handlerRegistered;
 
         private static Type _logEntryType;
         private static MethodInfo _addMessage;
@@ -38,11 +39,11 @@ namespace Appegy.UniLogger
         private static FieldInfo _fIdentifier;
 
         private static Delegate _doubleClickDelegate;
-        private static MethodInfo _removeDoubleClick;
 
         public static bool TryLog(LogLevel logLevel, string message, string stackTrace, Object context)
         {
-            if (!TryInitialize()) return false;
+            if (!EnsureReflection()) return false;
+            EnsureDoubleClickHandlerRegistered();
             try
             {
                 var entry = Activator.CreateInstance(_logEntryType);
@@ -73,28 +74,10 @@ namespace Appegy.UniLogger
             }
         }
 
-        public static void Shutdown()
+        private static bool EnsureReflection()
         {
-            if (_doubleClickDelegate != null && _removeDoubleClick != null)
-            {
-                try
-                {
-                    _removeDoubleClick.Invoke(null, new object[] { _doubleClickDelegate });
-                }
-                catch
-                {
-                    // editor went away, nothing to detach
-                }
-            }
-            _doubleClickDelegate = null;
-            _initialized = false;
-            _available = false;
-        }
-
-        private static bool TryInitialize()
-        {
-            if (_initialized) return _available;
-            _initialized = true;
+            if (_reflectionReady) return _reflectionAvailable;
+            _reflectionReady = true;
             try
             {
                 var logEntriesType = FindType("UnityEditor.LogEntries");
@@ -110,36 +93,33 @@ namespace Appegy.UniLogger
                 _fMode = _logEntryType.GetField("mode", InstanceFlags);
                 _fIdentifier = _logEntryType.GetField("identifier", InstanceFlags);
 
-                if (_addMessage == null || _fMessage == null || _fFile == null || _fMode == null || _fIdentifier == null)
-                {
-                    return false;
-                }
-
-                TryRegisterDoubleClick();
-
-                _available = true;
-                return true;
+                _reflectionAvailable = _addMessage != null && _fMessage != null && _fFile != null && _fMode != null && _fIdentifier != null;
+                return _reflectionAvailable;
             }
             catch
             {
-                _available = false;
+                _reflectionAvailable = false;
                 return false;
             }
         }
 
-        private static void TryRegisterDoubleClick()
+        // Registers the console row double-click handler. Driven once per editor domain from the editor
+        // assembly (so it survives play-mode exit and domain reloads) and defensively from TryLog.
+        internal static void EnsureDoubleClickHandlerRegistered()
         {
+            if (_handlerRegistered) return;
+            if (!EnsureReflection()) return;
             try
             {
                 var consoleType = FindType("UnityEditor.ConsoleWindow");
                 var delegateType = consoleType?.GetNestedType("EntryDoubleClickedDelegate", BindingFlags.Public | BindingFlags.NonPublic);
                 var add = consoleType?.GetMethod("add_entryWithManagedCallbackDoubleClicked", StaticFlags);
-                _removeDoubleClick = consoleType?.GetMethod("remove_entryWithManagedCallbackDoubleClicked", StaticFlags);
                 if (delegateType == null || add == null) return;
 
                 var handler = typeof(UnityConsoleBridge).GetMethod(nameof(OnEntryDoubleClicked), BindingFlags.Static | BindingFlags.NonPublic);
                 _doubleClickDelegate = Delegate.CreateDelegate(delegateType, handler);
                 add.Invoke(null, new object[] { _doubleClickDelegate });
+                _handlerRegistered = true;
             }
             catch
             {
