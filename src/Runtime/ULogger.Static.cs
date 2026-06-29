@@ -95,6 +95,7 @@ namespace Appegy.UniLogger
                 Terminate();
             }
             var originalHandler = Debug.unityLogger.logHandler;
+            ManagedStackTraceConverter.SetProjectRoot(Application.dataPath);
             Data = new ULoggerData
             {
                 OriginalHandler = originalHandler,
