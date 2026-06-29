@@ -111,6 +111,7 @@ namespace Appegy.UniLogger
         {
             ThreadDispatcher.EnsureMainThread(nameof(Terminate));
             if (Data == null) return;
+            UnityConsoleBridge.Shutdown();
             Debug.unityLogger.logHandler = Data.OriginalHandler;
             Application.logMessageReceivedThreaded -= OnLogMessageReceivedThreaded;
             Application.quitting -= Terminate;

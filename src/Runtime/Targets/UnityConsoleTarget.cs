@@ -16,6 +16,14 @@ namespace Appegy.UniLogger
         [HideInCallstack]
         protected internal override void Log(in LogEntry entry, string stackTrace)
         {
+            // Editor: route through the managed-callback console entry so the displayed stack is ours
+            // (clean, with clickable frames) and row double-click lands on the real call site.
+            if (ThreadDispatcher.IsMainThread && UnityConsoleBridge.TryLog(entry.LogLevel, entry.String, stackTrace, entry.Context))
+            {
+                return;
+            }
+
+            // Player build, a background thread, or the bridge is unavailable: forward to the engine.
             var handler = ULogger.OriginalHandler;
             if (handler == null) return;
 

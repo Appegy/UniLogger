@@ -100,7 +100,7 @@ namespace Appegy.UniLogger
 
         private static string CaptureStackTrace()
         {
-            return StackTraceUtility.ExtractStackTrace();
+            return StackTraceCleaner.StripLeadingInternalFrames(StackTraceUtility.ExtractStackTrace());
         }
 
         [HideInCallstack]
