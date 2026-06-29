@@ -6,83 +6,69 @@ namespace Appegy.UniLogger
     public class StackTraceCleanerTests
     {
         [Test]
-        public void WhenLeadingFramesAreInternal_ThanTheyAreStripped()
+        public void WhenUniLoggerAndUnityLogFramesPresent_ThanTheyAreDropped()
         {
             var stack =
                 "UnityEngine.StackTraceUtility:ExtractStackTrace ()\n" +
                 "Appegy.UniLogger.ULogger:SendLog (Appegy.UniLogger.LogLevel,string)\n" +
                 "Appegy.UniLogger.ExtendedULogger:Log (Appegy.UniLogger.ULogger,string)\n" +
-                "MyGame.Player:Start () (at Assets/Player.cs:10)\n" +
-                "UnityEngine.MonoBehaviour:Invoke ()";
+                "MyGame.Player:Start () (at Assets/Player.cs:10)";
 
-            var cleaned = StackTraceCleaner.StripLeadingInternalFrames(stack);
+            var cleaned = StackTraceCleaner.RemoveNoiseFrames(stack);
 
-            cleaned.Should().StartWith("MyGame.Player:Start () (at Assets/Player.cs:10)");
-            cleaned.Should().NotContain("Appegy.UniLogger.ULogger:");
-            cleaned.Should().NotContain("UnityEngine.StackTraceUtility");
+            cleaned.Should().Be("MyGame.Player:Start () (at Assets/Player.cs:10)");
         }
 
         [Test]
-        public void WhenNoLeadingInternalFrames_ThanStackIsUnchanged()
+        public void WhenAssertionFramesPresent_ThanTheyAreDropped()
         {
-            var stack = "MyGame.Player:Start () (at Assets/Player.cs:10)";
+            var stack =
+                "UnityEngine.Assertions.Assert:Fail (System.String, System.String)\n" +
+                "UnityEngine.Assertions.Assert:IsTrue (System.Boolean, System.String)\n" +
+                "MyGame.Player:Start () (at Assets/Player.cs:11)";
 
-            StackTraceCleaner.StripLeadingInternalFrames(stack).Should().Be(stack);
+            StackTraceCleaner.RemoveNoiseFrames(stack)
+                .Should().Be("MyGame.Player:Start () (at Assets/Player.cs:11)");
         }
 
         [Test]
-        public void WhenAllFramesAreInternal_ThanOriginalIsKept()
+        public void WhenAsyncMachineryFramesPresent_ThanTheyAreDropped()
         {
-            var stack = "Appegy.UniLogger.ULogger:SendLog ()\nUnityEngine.Debug:Log ()";
+            // mixes Unity ('/') and Mono ('+') nested-type separators
+            var stack =
+                "MyGame.Job:MoveNext () (at Assets/Job.cs:22)\n" +
+                "System.Runtime.CompilerServices.AsyncMethodBuilderCore/MoveNextRunner:InvokeMoveNext (object)\n" +
+                "System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext)\n" +
+                "System.Threading.Tasks.SynchronizationContextAwaitTaskContinuation+<>c:<.cctor>b__7_0 (object)\n" +
+                "UnityEngine.UnitySynchronizationContext/WorkRequest:Invoke () (at /home/bokken/UnitySynchronizationContext.cs:156)\n" +
+                "UnityEngine.UnitySynchronizationContext:Exec () (at /home/bokken/UnitySynchronizationContext.cs:84)";
 
-            StackTraceCleaner.StripLeadingInternalFrames(stack).Should().Be(stack);
+            StackTraceCleaner.RemoveNoiseFrames(stack)
+                .Should().Be("MyGame.Job:MoveNext () (at Assets/Job.cs:22)");
         }
 
         [Test]
-        public void WhenPrefixIsSharedButTypeDiffers_ThanFrameIsNotStripped()
+        public void WhenPrefixIsSharedButTypeDiffers_ThanFrameIsKept()
         {
             // ULoggerInitializer shares the "Appegy.UniLogger.ULogger" prefix but is a different type
             var stack = "Appegy.UniLogger.ULoggerInitializer:Configure () (at Assets/Init.cs:5)";
 
-            StackTraceCleaner.StripLeadingInternalFrames(stack).Should().Be(stack);
+            StackTraceCleaner.RemoveNoiseFrames(stack).Should().Be(stack);
+        }
+
+        [Test]
+        public void WhenNoNoiseFrames_ThanStackIsUnchanged()
+        {
+            var stack = "MyGame.Player:Start () (at Assets/Player.cs:10)\nMyGame.Player:Awake () (at Assets/Player.cs:5)";
+
+            StackTraceCleaner.RemoveNoiseFrames(stack).Should().Be(stack);
         }
 
         [Test]
         public void WhenStackIsNullOrEmpty_ThanReturnedAsIs()
         {
-            StackTraceCleaner.StripLeadingInternalFrames(null).Should().BeNull();
-            StackTraceCleaner.StripLeadingInternalFrames(string.Empty).Should().BeEmpty();
-        }
-
-        [Test]
-        public void WhenLeadingFramesHaveNoLocation_ThanTheyAreStripped()
-        {
-            var stack =
-                "UnityEngine.Assertions.Assert:Fail(String, String)\n" +
-                "UnityEngine.Assertions.Assert:IsTrue(Boolean, String)\n" +
-                "Appegy.UniLogger.Example.ExceptionInAssert:Start () (at Assets/Scripts/Exceptions/ExceptionInAssert.cs:11)";
-
-            var cleaned = StackTraceCleaner.StripLeadingFramesWithoutLocation(stack);
-
-            cleaned.Should().StartWith("Appegy.UniLogger.Example.ExceptionInAssert:Start ()");
-            cleaned.Should().NotContain("UnityEngine.Assertions.Assert:Fail");
-            cleaned.Should().NotContain("UnityEngine.Assertions.Assert:IsTrue");
-        }
-
-        [Test]
-        public void WhenFirstFrameHasLocation_ThanStackIsUnchanged()
-        {
-            var stack = "MyGame.Player:Start () (at Assets/Player.cs:10)\nUnityEngine.SomeInternal:Call()";
-
-            StackTraceCleaner.StripLeadingFramesWithoutLocation(stack).Should().Be(stack);
-        }
-
-        [Test]
-        public void WhenNoFrameHasLocation_ThanOriginalIsKept()
-        {
-            var stack = "UnityEngine.Assertions.Assert:Fail(String, String)\nUnityEngine.Assertions.Assert:IsTrue(Boolean, String)";
-
-            StackTraceCleaner.StripLeadingFramesWithoutLocation(stack).Should().Be(stack);
+            StackTraceCleaner.RemoveNoiseFrames(null).Should().BeNull();
+            StackTraceCleaner.RemoveNoiseFrames(string.Empty).Should().BeEmpty();
         }
     }
 }

@@ -1,93 +1,98 @@
-using System;
-
 namespace Appegy.UniLogger
 {
+    // Drops noise frames from a Unity-formatted stack trace. Every group below is an independent filter:
+    // to add one (e.g. UniTask frames) declare a new string[] and list it in NoiseGroups; to stop
+    // filtering a group, remove it from NoiseGroups. Matching is by namespace/type prefix at a frame
+    // boundary, so a group entry like "UnityEngine.UnitySynchronizationContext" drops every frame inside
+    // that type (and its nested types), wherever it appears in the trace.
     internal static class StackTraceCleaner
     {
-        private static readonly string[] InternalFramePrefixes =
+        // Our own logging plumbing.
+        private static readonly string[] UniLoggerFrames =
+        {
+            "Appegy.UniLogger.ULogger",
+            "Appegy.UniLogger.ExtendedULogger",
+            "Appegy.UniLogger.UnityConsoleTarget",
+            "Appegy.UniLogger.UnityConsoleBridge",
+            "Appegy.UniLogger.UnityExceptionFormatter",
+            "Appegy.UniLogger.LogDispatcher",
+        };
+
+        // Unity's logging entry points.
+        private static readonly string[] UnityLogFrames =
         {
             "UnityEngine.StackTraceUtility",
             "UnityEngine.Debug",
             "UnityEngine.Logger",
             "UnityEngine.UnityLogger",
-            "Appegy.UniLogger.ULogger",
-            "Appegy.UniLogger.ExtendedULogger",
-            "Appegy.UniLogger.UnityExceptionFormatter",
-            "Appegy.UniLogger.UnityConsoleTarget",
-            "Appegy.UniLogger.UnityConsoleBridge",
-            "Appegy.UniLogger.LogDispatcher",
         };
 
-        public static string StripLeadingInternalFrames(string stack)
+        // UnityEngine.Assertions internals (the assert that raised, not the call site).
+        private static readonly string[] AssertionFrames =
+        {
+            "UnityEngine.Assertions",
+        };
+
+        // async/await state-machine and task-continuation plumbing.
+        private static readonly string[] AsyncMachineryFrames =
+        {
+            "System.Runtime.CompilerServices.AsyncMethodBuilderCore",
+            "System.Threading.ExecutionContext",
+            "System.Threading.Tasks.SynchronizationContextAwaitTaskContinuation",
+            "UnityEngine.UnitySynchronizationContext",
+        };
+
+        private static readonly string[][] NoiseGroups =
+        {
+            UniLoggerFrames,
+            UnityLogFrames,
+            AssertionFrames,
+            AsyncMachineryFrames,
+        };
+
+        public static string RemoveNoiseFrames(string stack)
         {
             if (string.IsNullOrEmpty(stack)) return stack;
 
-            var start = 0;
-            var length = stack.Length;
-            while (start < length)
+            var builder = StringBuilderPool.GetBuilder();
+            try
             {
-                var lineEnd = stack.IndexOf('\n', start);
-                var lineLength = (lineEnd < 0 ? length : lineEnd) - start;
-                if (!IsInternalFrame(stack, start, lineLength))
+                var first = true;
+                var start = 0;
+                var length = stack.Length;
+                while (start < length)
                 {
-                    break;
+                    var lineEnd = stack.IndexOf('\n', start);
+                    var lineStop = lineEnd < 0 ? length : lineEnd;
+                    if (!IsNoiseFrame(stack, start, lineStop - start))
+                    {
+                        if (!first) builder.Append('\n');
+                        builder.Append(stack, start, lineStop - start);
+                        first = false;
+                    }
+                    if (lineEnd < 0) break;
+                    start = lineEnd + 1;
                 }
-                if (lineEnd < 0)
-                {
-                    start = length;
-                    break;
-                }
-                start = lineEnd + 1;
+                return builder.ToString();
             }
-
-            // nothing stripped, or everything was internal: keep the original rather than returning empty
-            if (start <= 0 || start >= length)
+            finally
             {
-                return stack;
+                StringBuilderPool.ReturnBuilder(builder);
             }
-            return stack.Substring(start);
         }
 
-        // Drops leading frames that have no source location (e.g. UnityEngine.Assertions.Assert:Fail),
-        // stopping at the first frame that points to a file. Keeps the original if nothing has a location.
-        public static string StripLeadingFramesWithoutLocation(string stack)
+        private static bool IsNoiseFrame(string stack, int lineStart, int lineLength)
         {
-            if (string.IsNullOrEmpty(stack)) return stack;
-
-            var start = 0;
-            var length = stack.Length;
-            while (start < length)
+            foreach (var group in NoiseGroups)
             {
-                var lineEnd = stack.IndexOf('\n', start);
-                var lineStop = lineEnd < 0 ? length : lineEnd;
-                if (stack.IndexOf("(at ", start, lineStop - start, StringComparison.Ordinal) >= 0)
+                foreach (var prefix in group)
                 {
-                    break;
-                }
-                if (lineEnd < 0)
-                {
-                    start = length;
-                    break;
-                }
-                start = lineEnd + 1;
-            }
-
-            if (start <= 0 || start >= length)
-            {
-                return stack;
-            }
-            return stack.Substring(start);
-        }
-
-        private static bool IsInternalFrame(string stack, int lineStart, int lineLength)
-        {
-            foreach (var prefix in InternalFramePrefixes)
-            {
-                if (prefix.Length <= lineLength &&
-                    string.CompareOrdinal(stack, lineStart, prefix, 0, prefix.Length) == 0 &&
-                    (prefix.Length == lineLength || IsFrameBoundary(stack[lineStart + prefix.Length])))
-                {
-                    return true;
+                    if (prefix.Length <= lineLength &&
+                        string.CompareOrdinal(stack, lineStart, prefix, 0, prefix.Length) == 0 &&
+                        (prefix.Length == lineLength || IsFrameBoundary(stack[lineStart + prefix.Length])))
+                    {
+                        return true;
+                    }
                 }
             }
             return false;
@@ -95,7 +100,8 @@ namespace Appegy.UniLogger
 
         private static bool IsFrameBoundary(char c)
         {
-            return c == '.' || c == ':' || c == '(' || c == ' ';
+            // '.' ':' '(' ' ' end a type/namespace; '/' and '+' separate Unity/Mono nested types.
+            return c == '.' || c == ':' || c == '(' || c == ' ' || c == '/' || c == '+';
         }
     }
 }

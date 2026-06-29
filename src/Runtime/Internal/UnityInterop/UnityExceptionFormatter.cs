@@ -18,10 +18,10 @@ namespace Appegy.UniLogger
                 // unlike new StackTrace(exception); convert it from Mono format to clickable Unity format.
                 var raw = exception.StackTrace;
                 var stack = string.IsNullOrEmpty(raw)
-                    ? StackTraceCleaner.StripLeadingInternalFrames(StackTraceUtility.ExtractStackTrace())
+                    ? StackTraceUtility.ExtractStackTrace()
                     : ManagedStackTraceConverter.Convert(raw);
 
-                builder.Append(StackTraceCleaner.StripLeadingFramesWithoutLocation(stack));
+                builder.Append(StackTraceCleaner.RemoveNoiseFrames(stack));
                 return builder.ToString();
             }
             catch
