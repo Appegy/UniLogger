@@ -137,6 +137,7 @@ namespace Appegy.UniLogger
 
         private static void OnLogMessageReceivedThreaded(string condition, string stacktrace, LogType type)
         {
+            if (type == LogType.Exception) return;
             if (_pending.HasValue)
             {
                 var pending = _pending.Value;
@@ -155,8 +156,26 @@ namespace Appegy.UniLogger
         [HideInCallstack]
         private static void OnUnobservedTaskException(object sender, UnobservedTaskExceptionEventArgs e)
         {
-            if (Data == null) return;
-            Data.LogHandler.Default.LogException(e.Exception.InnerException ?? e.Exception);
+            LogException(e.Exception.InnerException ?? e.Exception);
+        }
+
+        internal static void EnqueueException(Exception exception)
+        {
+            var data = Data;
+            if (data == null || data.Targets.Length == 0 || exception == null) return;
+            exception = UnwrapAggregate(exception);
+            var message = UnityExceptionFormatter.Format(exception);
+            data.Dispatcher.Enqueue(new LogRecord(exception, message));
+        }
+
+        private static Exception UnwrapAggregate(Exception exception)
+        {
+            if (exception is AggregateException aggregate)
+            {
+                var inner = aggregate.Flatten().InnerExceptions;
+                if (inner.Count == 1) return inner[0];
+            }
+            return exception;
         }
 
         #region GetLogger

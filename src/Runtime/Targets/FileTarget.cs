@@ -80,6 +80,11 @@ namespace Appegy.UniLogger
             }
         }
 
+        protected internal override void LogException(Exception exception, string message)
+        {
+            Log(message, null);
+        }
+
         protected internal override void Flush()
         {
             if (_disposed || _writer == null) return;

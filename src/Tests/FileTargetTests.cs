@@ -52,6 +52,17 @@ namespace Appegy.UniLogger
         }
 
         [Test]
+        public void WhenExceptionLogged_ThanItIsWrittenToFile()
+        {
+            using var target = new FileTarget(Path.Combine(_directory, "game.log"));
+
+            target.LogException(new InvalidOperationException("ignored"), "formatted exception text");
+            target.Flush();
+
+            File.ReadAllText(target.CurrentFilePath).Should().Contain("formatted exception text");
+        }
+
+        [Test]
         public void WhenSizeLimitExceeded_ThanLogRollsToNextFile()
         {
             using var target = new FileTarget(Path.Combine(_directory, "game.log"), fileSizeLimitBytes: 16);

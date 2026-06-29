@@ -15,6 +15,7 @@ namespace Appegy.UniLogger
         public readonly Object Context;
         public readonly DateTime LogTime;
         public readonly int ThreadId;
+        public readonly Exception Exception;
 
         public LogRecord(IReadOnlyList<string> tags, LogLevel logLevel, string message, string stackTrace, Color color, Object context, DateTime logTime, int threadId)
         {
@@ -26,6 +27,20 @@ namespace Appegy.UniLogger
             Context = context;
             LogTime = logTime;
             ThreadId = threadId;
+            Exception = null;
+        }
+
+        public LogRecord(Exception exception, string message)
+        {
+            Exception = exception;
+            Message = message;
+            Tags = null;
+            LogLevel = default;
+            StackTrace = null;
+            Color = default;
+            Context = null;
+            LogTime = default;
+            ThreadId = 0;
         }
     }
 }

@@ -31,6 +31,7 @@ namespace UnityEngine
         public void LogException(Exception exception, Object context)
         {
             Default.LogException(exception, context);
+            ULogger.EnqueueException(exception);
         }
 
         public void LogFormat(LogType logType, Object context, string format, params object[] args)

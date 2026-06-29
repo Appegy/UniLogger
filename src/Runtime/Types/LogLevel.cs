@@ -11,7 +11,6 @@ namespace Appegy.UniLogger
         Log = 1,
         Warning = 2,
         Error = 3,
-        Exception = 4,
     }
 
     public static class LogLevelExtensions
@@ -26,7 +25,7 @@ namespace Appegy.UniLogger
                 LogType.Assert => LogLevel.Error,
                 LogType.Warning => LogLevel.Warning,
                 LogType.Log => LogLevel.Log,
-                LogType.Exception => LogLevel.Exception,
+                LogType.Exception => LogLevel.Error,
                 _ => throw new ArgumentOutOfRangeException(nameof(original), original, null)
             };
         }
@@ -39,7 +38,6 @@ namespace Appegy.UniLogger
                 LogLevel.Log => LogType.Log,
                 LogLevel.Warning => LogType.Warning,
                 LogLevel.Error => LogType.Error,
-                LogLevel.Exception => LogType.Exception,
                 _ => throw new ArgumentOutOfRangeException(nameof(original), original, null)
             };
         }
@@ -52,7 +50,6 @@ namespace Appegy.UniLogger
                 LogLevel.Log => "LG",
                 LogLevel.Warning => "WN",
                 LogLevel.Error => "ER",
-                LogLevel.Exception => "EX",
                 _ => throw new ArgumentOutOfRangeException(nameof(logLevel), logLevel, null)
             };
         }
@@ -65,7 +62,6 @@ namespace Appegy.UniLogger
                 LogLevel.Log => "white",
                 LogLevel.Warning => "orange",
                 LogLevel.Error => "red",
-                LogLevel.Exception => "#FF5349FF", // (orange red)
                 _ => throw new ArgumentOutOfRangeException(nameof(logLevel), logLevel, null)
             };
         }

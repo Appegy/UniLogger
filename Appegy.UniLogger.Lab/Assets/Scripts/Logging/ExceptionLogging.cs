@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 namespace Appegy.UniLogger.Example
@@ -12,6 +13,7 @@ namespace Appegy.UniLogger.Example
             ThrowMethod();
         }
 
+        [MethodImpl(MethodImplOptions.NoInlining)]
         private void ThrowMethod()
         {
             Debug.LogException(new Exception("Custom exception"), this);
