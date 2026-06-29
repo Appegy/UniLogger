@@ -49,10 +49,11 @@ namespace Appegy.UniLogger
 
         public string CurrentFilePath { get; private set; }
 
-        protected internal override void Log(string message, string stackTrace)
+        protected internal override void Log(in LogEntry entry, string stackTrace)
         {
             if (_disposed || _writer == null) return;
 
+            var message = entry.String;
             var hasStack = !string.IsNullOrEmpty(stackTrace);
             var bytes = _encoding.GetByteCount(message) + 1;
             if (hasStack) bytes += _encoding.GetByteCount(stackTrace) + 1;
@@ -80,9 +81,9 @@ namespace Appegy.UniLogger
             }
         }
 
-        protected internal override void LogException(Exception exception, string message)
+        protected internal override void LogException(Exception exception, in LogEntry entry)
         {
-            Log(message, null);
+            Log(in entry, null);
         }
 
         protected internal override void Flush()

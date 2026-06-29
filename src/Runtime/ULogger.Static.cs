@@ -145,7 +145,8 @@ namespace Appegy.UniLogger
                 {
                     stacktrace = pending.ManualStacktrace;
                 }
-                pending.Data.Dispatcher.Enqueue(new LogRecord(pending.Tags, pending.LogLevel, pending.Message, stacktrace, pending.Color, pending.Context, pending.LogTime, pending.ThreadId));
+                var entry = new LogEntry(pending.Tags, pending.LogLevel, pending.Message, pending.Color, pending.Context, pending.LogTime, pending.ThreadId);
+                pending.Data.Dispatcher.Enqueue(new LogRecord(in entry, stacktrace));
             }
             else
             {
@@ -165,7 +166,8 @@ namespace Appegy.UniLogger
             if (data == null || data.Targets.Length == 0 || exception == null) return;
             exception = UnwrapAggregate(exception);
             var message = UnityExceptionFormatter.Format(exception);
-            data.Dispatcher.Enqueue(new LogRecord(exception, message));
+            var entry = new LogEntry(null, LogLevel.Error, message, default, null, default, 0);
+            data.Dispatcher.Enqueue(new LogRecord(exception, in entry));
         }
 
         private static Exception UnwrapAggregate(Exception exception)

@@ -82,7 +82,8 @@ namespace Appegy.UniLogger
                 }
                 if (allowedByAnyFilterer)
                 {
-                    Data.Dispatcher.Enqueue(new LogRecord(_tags, logLevel, message, manualStacktrace, color, context, logTime, threadId));
+                    var entry = new LogEntry(_tags, logLevel, message, color, context, logTime, threadId);
+                    Data.Dispatcher.Enqueue(new LogRecord(in entry, manualStacktrace));
                 }
             }
         }
@@ -103,7 +104,8 @@ namespace Appegy.UniLogger
         {
             if (Data == null) return;
             var logLevel = type.ConvertToLogLevel();
-            Data.Dispatcher.Enqueue(new LogRecord(_tags, logLevel, message, stacktrace, default, default, DateTime.Now, Thread.CurrentThread.ManagedThreadId));
+            var entry = new LogEntry(_tags, logLevel, message, default, default, DateTime.Now, Thread.CurrentThread.ManagedThreadId);
+            Data.Dispatcher.Enqueue(new LogRecord(in entry, stacktrace));
         }
 
         internal static void Deliver(ULoggerData data, in LogRecord record)
@@ -114,7 +116,7 @@ namespace Appegy.UniLogger
                 {
                     try
                     {
-                        target.LogException(record.Exception, record.Message);
+                        target.LogException(record.Exception, record.Entry);
                     }
                     catch
                     {
@@ -126,21 +128,28 @@ namespace Appegy.UniLogger
 
             foreach (var target in data.Targets)
             {
-                if (!WillBeAllowedByFilterer(target.Filterer, record.LogLevel, record.Tags))
-                {
-                    continue;
-                }
-                try
-                {
-                    var line = new LogEntry(FilterTags(record.Tags, target.Filterer, record.LogLevel), record.LogLevel, record.Message, record.Color, record.Context, record.LogTime, record.ThreadId);
-                    var formattedMessage = target.Formatter.Format(line);
-                    var targetStackTrace = target.GetStackTraceEnabled(record.LogLevel) ? record.StackTrace : null;
-                    target.Log(formattedMessage, targetStackTrace);
-                }
-                catch
-                {
-                    // just don't fail on log
-                }
+                DeliverLog(target, record.Entry, record.StackTrace);
+            }
+        }
+
+        internal static void DeliverLog(Target target, in LogEntry entry, string stackTrace)
+        {
+            if (!WillBeAllowedByFilterer(target.Filterer, entry.LogLevel, entry.Tags))
+            {
+                return;
+            }
+            try
+            {
+                var tags = FilterTags(entry.Tags, target.Filterer, entry.LogLevel);
+                var raw = ReferenceEquals(tags, entry.Tags) ? entry : entry.WithTags(tags);
+                var formatted = target.Formatter.Format(raw);
+                var outEntry = raw.WithMessage(formatted);
+                var stackTraceForTarget = target.GetStackTraceEnabled(entry.LogLevel) ? stackTrace : null;
+                target.Log(in outEntry, stackTraceForTarget);
+            }
+            catch
+            {
+                // just don't fail on log
             }
         }
 

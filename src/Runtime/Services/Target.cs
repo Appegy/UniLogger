@@ -51,9 +51,9 @@ namespace Appegy.UniLogger
             return _stackTraceLogType[(int)logLevel];
         }
 
-        protected internal abstract void Log(string message, [CanBeNull] string stackTrace);
+        protected internal abstract void Log(in LogEntry entry, [CanBeNull] string stackTrace);
 
-        protected internal abstract void LogException([NotNull] Exception exception, string message);
+        protected internal abstract void LogException([NotNull] Exception exception, in LogEntry entry);
 
         protected internal virtual void Flush()
         {
