@@ -40,6 +40,8 @@ namespace Appegy.UniLogger
             }
         }
 
+        public virtual bool RunSynchronously => false;
+
         public void SetStackTraceEnabled(LogLevel logLevel, bool enabled)
         {
             ThreadDispatcher.EnsureMainThread(nameof(SetStackTraceEnabled));

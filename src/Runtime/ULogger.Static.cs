@@ -37,28 +37,26 @@ namespace Appegy.UniLogger
 
         private static readonly ULogger _unsortedLogger = ULogger.GetLogger(Tags.Unsorted);
 
-        [ThreadStatic] private static PendingBroadcast? _pending;
-
-        private struct PendingBroadcast
-        {
-            public ULoggerData Data;
-            public IReadOnlyList<string> Tags;
-            public LogLevel LogLevel;
-            public string Message;
-            public string ManualStacktrace;
-            public Color Color;
-            public UnityEngine.Object Context;
-            public DateTime LogTime;
-            public int ThreadId;
-        }
+        [ThreadStatic] private static bool _suppressNativeCapture;
 
         [CanBeNull]
         private static ULoggerData Data { get; set; }
 
+        internal static ILogHandler OriginalHandler => Data?.OriginalHandler;
+
+        internal static void BeginSuppressNativeCapture()
+        {
+            _suppressNativeCapture = true;
+        }
+
+        internal static void EndSuppressNativeCapture()
+        {
+            _suppressNativeCapture = false;
+        }
+
         public static IEnumerable<TargetBase> GetTargets()
         {
             if (Data == null) yield break;
-            yield return Data.UnityTarget;
             foreach (var target in Data.Targets)
             {
                 yield return target;
@@ -68,10 +66,6 @@ namespace Appegy.UniLogger
         public static T GetTarget<T>() where T : TargetBase
         {
             if (Data == null) return null;
-            if (Data.UnityTarget is T unityTarget)
-            {
-                return unityTarget;
-            }
             foreach (var target in Data.Targets)
             {
                 if (target is T match)
@@ -93,20 +87,18 @@ namespace Appegy.UniLogger
             }
         }
 
-        public static void Initialize(Formatter unityFormatter = null, Filterer unityFilterer = null)
+        public static void Initialize()
         {
             ThreadDispatcher.EnsureMainThread(nameof(Initialize));
             if (Data != null)
             {
                 Terminate();
             }
-            unityFormatter ??= new Formatter();
-            unityFilterer ??= new Filterer(true);
-            var unityTarget = new UnityTarget(unityFormatter, unityFilterer);
+            var originalHandler = Debug.unityLogger.logHandler;
             Data = new ULoggerData
             {
-                UnityTarget = unityTarget,
-                LogHandler = new UnityLogger(Debug.unityLogger.logHandler),
+                OriginalHandler = originalHandler,
+                LogHandler = new UnityLogger(),
             };
             Data.Dispatcher = new LogDispatcher(Data);
             Debug.unityLogger.logHandler = Data.LogHandler;
@@ -119,7 +111,7 @@ namespace Appegy.UniLogger
         {
             ThreadDispatcher.EnsureMainThread(nameof(Terminate));
             if (Data == null) return;
-            Debug.unityLogger.logHandler = Data.LogHandler.Default;
+            Debug.unityLogger.logHandler = Data.OriginalHandler;
             Application.logMessageReceivedThreaded -= OnLogMessageReceivedThreaded;
             Application.quitting -= Terminate;
             TaskScheduler.UnobservedTaskException -= OnUnobservedTaskException;
@@ -138,39 +130,19 @@ namespace Appegy.UniLogger
         private static void OnLogMessageReceivedThreaded(string condition, string stacktrace, LogType type)
         {
             if (type == LogType.Exception) return;
-            if (_pending.HasValue)
-            {
-                var pending = _pending.Value;
-                if (string.IsNullOrEmpty(stacktrace))
-                {
-                    stacktrace = pending.ManualStacktrace;
-                }
-                var entry = new LogEntry(pending.Tags, pending.LogLevel, pending.Message, pending.Color, pending.Context, pending.LogTime, pending.ThreadId);
-                pending.Data.Dispatcher.Enqueue(new LogRecord(in entry, stacktrace));
-            }
-            else
-            {
-                _unsortedLogger.BroadcastUnobservedLog(condition, stacktrace, type);
-            }
+            // logs produced by our own forward to the original handler must not be captured again
+            if (_suppressNativeCapture) return;
+            // engine/native messages that never went through our managed handler: mirror them to async targets
+            _unsortedLogger.BroadcastUnobservedLog(condition, stacktrace, type);
         }
 
         [HideInCallstack]
         private static void OnUnobservedTaskException(object sender, UnobservedTaskExceptionEventArgs e)
         {
-            LogException(e.Exception.InnerException ?? e.Exception);
+            DispatchException(e.Exception, null);
         }
 
-        internal static void EnqueueException(Exception exception)
-        {
-            var data = Data;
-            if (data == null || data.Targets.Length == 0 || exception == null) return;
-            exception = UnwrapAggregate(exception);
-            var message = UnityExceptionFormatter.Format(exception);
-            var entry = new LogEntry(null, LogLevel.Error, message, default, null, default, 0);
-            data.Dispatcher.Enqueue(new LogRecord(exception, in entry));
-        }
-
-        private static Exception UnwrapAggregate(Exception exception)
+        internal static Exception UnwrapException(Exception exception)
         {
             if (exception is AggregateException aggregate)
             {

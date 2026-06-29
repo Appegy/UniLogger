@@ -21,17 +21,9 @@ namespace UnityEngine
     {
         private static readonly ULogger _unsortedLogger = ULogger.GetLogger(Tags.Unsorted);
 
-        public ILogger Default { get; private set; }
-
-        public UnityLogger(ILogHandler defaultLogger)
-        {
-            Default = new Logger(defaultLogger);
-        }
-
         public void LogException(Exception exception, Object context)
         {
-            Default.LogException(exception, context);
-            ULogger.EnqueueException(exception);
+            ULogger.DispatchException(exception, context);
         }
 
         public void LogFormat(LogType logType, Object context, string format, params object[] args)
@@ -65,7 +57,7 @@ namespace UnityEngine
                 message = string.Format(format, args);
             }
 
-            _unsortedLogger.SendLogToUnity(logType.ConvertToLogLevel(), message, default, context);
+            _unsortedLogger.SendLog(logType.ConvertToLogLevel(), message, default, context);
         }
     }
 }

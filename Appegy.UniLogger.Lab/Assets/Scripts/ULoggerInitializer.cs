@@ -41,8 +41,9 @@ namespace Appegy.UniLogger.Example
             // Disable all logs with tag Unsorted
             // filterer.Mute("Unsorted");
 
-            // When formatter and filterer are ready - initialize logger
-            ULogger.Initialize(formatter, filterer);
+            // When formatter and filterer are ready - initialize logger and add the unity console target
+            ULogger.Initialize();
+            ULogger.AddTarget(new UnityConsoleTarget(formatter, filterer));
         }
 
         private static void InitializeFileTarget()

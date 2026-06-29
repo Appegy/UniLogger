@@ -349,14 +349,7 @@ namespace Appegy.UniLogger
         [HideInCallstack]
         public static void LogException(Exception exception, Object context = null)
         {
-            if (Data != null)
-            {
-                Data.LogHandler.LogException(exception, context);
-            }
-            else
-            {
-                Debug.unityLogger.logHandler.LogException(exception, context);
-            }
+            DispatchException(exception, context);
         }
 
         #endregion
