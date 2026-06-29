@@ -47,14 +47,12 @@ namespace Appegy.UniLogger
             {
                 var entry = Activator.CreateInstance(_logEntryType);
 
-                string file = null;
-                var line = 0;
-                var finalMessage = message;
-                if (!string.IsNullOrEmpty(stackTrace))
-                {
-                    TryGetTopFrame(stackTrace, out file, out line);
-                    finalMessage = message + "\n" + Hyperlinkify(stackTrace);
-                }
+                // For exceptions the stack is already part of the message; for normal logs it is separate.
+                var combined = string.IsNullOrEmpty(stackTrace) ? message : message + "\n" + stackTrace;
+                // Double-click target is the first frame that points into the project (Assets/...),
+                // so engine-internal frames (e.g. UnityEngine.Assertions at /home/bokken/...) are skipped.
+                TryGetTopFrame(combined, out var file, out var line);
+                var finalMessage = Hyperlinkify(combined);
 
                 _fMessage.SetValue(entry, finalMessage);
                 if (file != null)

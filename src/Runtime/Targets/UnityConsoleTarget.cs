@@ -41,6 +41,14 @@ namespace Appegy.UniLogger
         [HideInCallstack]
         protected internal override void LogException(Exception exception, in LogEntry entry)
         {
+            // Editor: route through the bridge so double-click lands on the first project frame
+            // (the formatted message already carries the cleaned exception stack).
+            if (ThreadDispatcher.IsMainThread && UnityConsoleBridge.TryLog(LogLevel.Error, entry.String, null, entry.Context))
+            {
+                return;
+            }
+
+            // Player build, a background thread, or the bridge is unavailable: forward to the engine.
             var handler = ULogger.OriginalHandler;
             if (handler == null) return;
 
