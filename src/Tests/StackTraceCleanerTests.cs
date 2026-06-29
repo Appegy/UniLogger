@@ -53,5 +53,36 @@ namespace Appegy.UniLogger
             StackTraceCleaner.StripLeadingInternalFrames(null).Should().BeNull();
             StackTraceCleaner.StripLeadingInternalFrames(string.Empty).Should().BeEmpty();
         }
+
+        [Test]
+        public void WhenLeadingFramesHaveNoLocation_ThanTheyAreStripped()
+        {
+            var stack =
+                "UnityEngine.Assertions.Assert:Fail(String, String)\n" +
+                "UnityEngine.Assertions.Assert:IsTrue(Boolean, String)\n" +
+                "Appegy.UniLogger.Example.ExceptionInAssert:Start () (at Assets/Scripts/Exceptions/ExceptionInAssert.cs:11)";
+
+            var cleaned = StackTraceCleaner.StripLeadingFramesWithoutLocation(stack);
+
+            cleaned.Should().StartWith("Appegy.UniLogger.Example.ExceptionInAssert:Start ()");
+            cleaned.Should().NotContain("UnityEngine.Assertions.Assert:Fail");
+            cleaned.Should().NotContain("UnityEngine.Assertions.Assert:IsTrue");
+        }
+
+        [Test]
+        public void WhenFirstFrameHasLocation_ThanStackIsUnchanged()
+        {
+            var stack = "MyGame.Player:Start () (at Assets/Player.cs:10)\nUnityEngine.SomeInternal:Call()";
+
+            StackTraceCleaner.StripLeadingFramesWithoutLocation(stack).Should().Be(stack);
+        }
+
+        [Test]
+        public void WhenNoFrameHasLocation_ThanOriginalIsKept()
+        {
+            var stack = "UnityEngine.Assertions.Assert:Fail(String, String)\nUnityEngine.Assertions.Assert:IsTrue(Boolean, String)";
+
+            StackTraceCleaner.StripLeadingFramesWithoutLocation(stack).Should().Be(stack);
+        }
     }
 }

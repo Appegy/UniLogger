@@ -45,7 +45,7 @@ namespace Appegy.UniLogger
                 }
                 else
                 {
-                    builder.Append(stack);
+                    builder.Append(StackTraceCleaner.StripLeadingFramesWithoutLocation(stack));
                 }
 
                 return builder.ToString();
