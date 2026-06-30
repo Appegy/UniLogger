@@ -261,6 +261,7 @@ GameObject:
   - component: {fileID: 1073955937}
   - component: {fileID: 1073955935}
   - component: {fileID: 1073955938}
+  - component: {fileID: 1073955939}
   m_Layer: 0
   m_Name: ExceptionExamples
   m_TagString: Untagged
@@ -320,7 +321,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e215250479f448a395c8747f0b757ba6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _throwAfter: 3
+  _throwAfter: 1
 --- !u!114 &1073955936
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -358,6 +359,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 52aa6e75cb376c29aa4b9a0c2a76ac86, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Appegy.UniLogger.Example.ExceptionInAggregate
+--- !u!114 &1073955939
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1073955931}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3f93ff74ae504169b65a59bfc251ce98, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1449897688
 GameObject:
   m_ObjectHideFlags: 0
@@ -370,7 +383,6 @@ GameObject:
   - component: {fileID: 1449897691}
   - component: {fileID: 1449897692}
   - component: {fileID: 1449897693}
-  - component: {fileID: 1449897690}
   m_Layer: 0
   m_Name: LogExamples
   m_TagString: Untagged
@@ -393,18 +405,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1449897690
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1449897688}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3f93ff74ae504169b65a59bfc251ce98, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &1449897691
 MonoBehaviour:
   m_ObjectHideFlags: 0
