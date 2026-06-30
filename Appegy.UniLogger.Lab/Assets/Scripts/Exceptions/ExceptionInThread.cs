@@ -13,9 +13,6 @@ namespace Appegy.UniLogger.Example
 
         private async void Start()
         {
-            // ThrowTask runs on a thread-pool thread (the log inside it comes from a background thread).
-            // Awaiting it observes the faulted task and surfaces the exception on the main thread right
-            // away, instead of waiting for the GC to finalize an unobserved task.
             await Task.Run(ThrowTask);
         }
 

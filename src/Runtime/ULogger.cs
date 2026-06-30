@@ -74,7 +74,6 @@ namespace Appegy.UniLogger
                 }
                 catch
                 {
-                    // just don't fail on log
                 }
             }
 
@@ -126,7 +125,6 @@ namespace Appegy.UniLogger
                     }
                     catch
                     {
-                        // just don't fail on log
                     }
                 }
                 return;
@@ -156,7 +154,6 @@ namespace Appegy.UniLogger
             }
             catch
             {
-                // just don't fail on log
             }
         }
 

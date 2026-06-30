@@ -8,14 +8,9 @@ using Object = UnityEngine.Object;
 
 namespace Appegy.UniLogger
 {
-    // Routes a log into the Unity editor console as a managed-callback entry so the displayed stack is
-    // fully ours (cleaned, with clickable <a href> frames) and double-clicking the row navigates to a
-    // source location we choose. The console API is main-thread only, so logs from background threads are
-    // queued and replayed on the main thread by an editor update pump. Pure reflection against internal
-    // editor API, so it compiles in the runtime assembly and simply stays disabled in player builds.
     internal static class UnityConsoleBridge
     {
-        private const int Marker = unchecked((int)0x754C4F47); // "uLOG"
+        private const int Marker = unchecked((int)0x754C4F47);
 
         private const int ModeError = 0x100;
         private const int ModeWarning = 0x200;
@@ -24,9 +19,9 @@ namespace Appegy.UniLogger
         private const BindingFlags StaticFlags = BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
         private const BindingFlags InstanceFlags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
 
-        private static readonly Regex FrameWithLocation = new Regex(@"\(at (Assets[^:)\n]+):(\d+)\)", RegexOptions.Compiled);
+        private static readonly Regex _frameWithLocation = new Regex(@"\(at (Assets[^:)\n]+):(\d+)\)", RegexOptions.Compiled);
 
-        private static readonly ConcurrentQueue<PendingWrite> Pending = new ConcurrentQueue<PendingWrite>();
+        private static readonly ConcurrentQueue<PendingWrite> _pending = new ConcurrentQueue<PendingWrite>();
 
         private static bool _reflectionReady;
         private static bool _reflectionAvailable;
@@ -68,10 +63,7 @@ namespace Appegy.UniLogger
             {
                 var entry = Activator.CreateInstance(_logEntryType);
 
-                // For exceptions the stack is already part of the message; for normal logs it is separate.
                 var combined = string.IsNullOrEmpty(stackTrace) ? message : message + "\n" + stackTrace;
-                // Double-click target is the first frame that points into the project (Assets/...),
-                // so engine-internal frames (e.g. UnityEngine.Assertions at /home/bokken/...) are skipped.
                 TryGetTopFrame(combined, out var file, out var line);
                 var finalMessage = Hyperlinkify(combined);
 
@@ -94,20 +86,16 @@ namespace Appegy.UniLogger
             }
         }
 
-        // Background-thread editor logs are queued here and flushed by DrainPending on the main thread, so
-        // they become real managed-callback entries (clean stack + row double-click) just like main-thread
-        // logs. Returns false in player builds, where the caller forwards natively instead.
         public static bool TryEnqueueForMainThread(LogLevel logLevel, string message, string stackTrace, Object context)
         {
             if (!EnsureReflection()) return false;
-            Pending.Enqueue(new PendingWrite(logLevel, message, stackTrace, context));
+            _pending.Enqueue(new PendingWrite(logLevel, message, stackTrace, context));
             return true;
         }
 
-        // Called every editor update from the editor assembly (always on the main thread).
         internal static void DrainPending()
         {
-            while (Pending.TryDequeue(out var write))
+            while (_pending.TryDequeue(out var write))
             {
                 TryLog(write.Level, write.Message, write.StackTrace, write.Context);
             }
@@ -121,7 +109,7 @@ namespace Appegy.UniLogger
             {
                 var logEntriesType = FindType("UnityEditor.LogEntries");
                 _logEntryType = FindType("UnityEditor.LogEntry");
-                if (logEntriesType == null || _logEntryType == null) return false; // player build
+                if (logEntriesType == null || _logEntryType == null) return false;
 
                 _addMessage = logEntriesType.GetMethod("AddMessageWithDoubleClickCallback", StaticFlags, null, new[] { _logEntryType }, null);
                 _openFile = logEntriesType.GetMethod("OpenFileOnSpecificLineAndColumn", StaticFlags);
@@ -142,8 +130,6 @@ namespace Appegy.UniLogger
             }
         }
 
-        // Registers the console row double-click handler. Driven once per editor domain from the editor
-        // assembly (so it survives play-mode exit and domain reloads) and defensively from TryLog.
         internal static void EnsureDoubleClickHandlerRegistered()
         {
             if (_handlerRegistered) return;
@@ -162,7 +148,6 @@ namespace Appegy.UniLogger
             }
             catch
             {
-                // double-click routing is best-effort: <a href> frames stay clickable even without it
                 _doubleClickDelegate = null;
             }
         }
@@ -171,7 +156,7 @@ namespace Appegy.UniLogger
         {
             try
             {
-                if (!(_fIdentifier.GetValue(entry) is int id) || id != Marker) return; // not ours
+                if (!(_fIdentifier.GetValue(entry) is int id) || id != Marker) return;
                 if (!(_fFile.GetValue(entry) is string file) || string.IsNullOrEmpty(file)) return;
                 var line = _fLine?.GetValue(entry) is int l ? l : 0;
                 var column = _fColumn?.GetValue(entry) is int c ? c : 0;
@@ -179,7 +164,6 @@ namespace Appegy.UniLogger
             }
             catch
             {
-                // never throw out of an editor callback
             }
         }
 
@@ -195,14 +179,14 @@ namespace Appegy.UniLogger
 
         private static string Hyperlinkify(string stackTrace)
         {
-            return FrameWithLocation.Replace(stackTrace, "(at <a href=\"$1\" line=\"$2\">$1:$2</a>)");
+            return _frameWithLocation.Replace(stackTrace, "(at <a href=\"$1\" line=\"$2\">$1:$2</a>)");
         }
 
         private static void TryGetTopFrame(string stackTrace, out string file, out int line)
         {
             file = null;
             line = 0;
-            var match = FrameWithLocation.Match(stackTrace);
+            var match = _frameWithLocation.Match(stackTrace);
             if (match.Success && int.TryParse(match.Groups[2].Value, out var parsed))
             {
                 file = match.Groups[1].Value;

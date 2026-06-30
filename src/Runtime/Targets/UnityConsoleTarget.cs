@@ -16,8 +16,6 @@ namespace Appegy.UniLogger
         [HideInCallstack]
         protected internal override void Log(in LogEntry entry, string stackTrace)
         {
-            // Editor main thread: managed-callback entry (clean stack + row double-click straight to source).
-            // Editor background thread: queue for the main thread (the console API is main-thread only).
             if (ThreadDispatcher.IsMainThread)
             {
                 if (UnityConsoleBridge.TryLog(entry.LogLevel, entry.String, stackTrace, entry.Context)) return;
@@ -33,7 +31,6 @@ namespace Appegy.UniLogger
         [HideInCallstack]
         protected internal override void LogException(Exception exception, in LogEntry entry)
         {
-            // The formatted message already carries the cleaned exception stack.
             if (ThreadDispatcher.IsMainThread)
             {
                 if (UnityConsoleBridge.TryLog(LogLevel.Error, entry.String, null, entry.Context)) return;
@@ -43,7 +40,6 @@ namespace Appegy.UniLogger
                 return;
             }
 
-            // Player build / fallback: native exception so crash reporters and the player log see it.
             var handler = ULogger.OriginalHandler;
             if (handler == null) return;
             ULogger.BeginSuppressNativeCapture();

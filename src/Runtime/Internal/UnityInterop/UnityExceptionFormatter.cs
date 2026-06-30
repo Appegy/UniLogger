@@ -14,8 +14,6 @@ namespace Appegy.UniLogger
             {
                 builder.Append(exception.GetType().Name).Append(": ").Append(exception.Message).Append('\n');
 
-                // The exception's own string preserves the original throw site across async/await rethrows,
-                // unlike new StackTrace(exception); convert it from Mono format to clickable Unity format.
                 var raw = exception.StackTrace;
                 var stack = string.IsNullOrEmpty(raw)
                     ? StackTraceUtility.ExtractStackTrace()

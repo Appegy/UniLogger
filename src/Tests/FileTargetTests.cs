@@ -30,7 +30,6 @@ namespace Appegy.UniLogger
             }
             catch
             {
-                // best effort cleanup
             }
         }
 

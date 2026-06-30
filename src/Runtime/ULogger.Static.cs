@@ -131,9 +131,7 @@ namespace Appegy.UniLogger
         private static void OnLogMessageReceivedThreaded(string condition, string stacktrace, LogType type)
         {
             if (type == LogType.Exception) return;
-            // logs produced by our own forward to the original handler must not be captured again
             if (_suppressNativeCapture) return;
-            // engine/native messages that never went through our managed handler: mirror them to async targets
             _unsortedLogger.BroadcastUnobservedLog(condition, stacktrace, type);
         }
 

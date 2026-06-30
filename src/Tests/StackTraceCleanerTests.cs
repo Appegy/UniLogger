@@ -34,7 +34,6 @@ namespace Appegy.UniLogger
         [Test]
         public void WhenAsyncMachineryFramesPresent_ThanTheyAreDropped()
         {
-            // mixes Unity ('/') and Mono ('+') nested-type separators
             var stack =
                 "MyGame.Job:MoveNext () (at Assets/Job.cs:22)\n" +
                 "System.Runtime.CompilerServices.AsyncMethodBuilderCore/MoveNextRunner:InvokeMoveNext (object)\n" +
@@ -50,7 +49,6 @@ namespace Appegy.UniLogger
         [Test]
         public void WhenPrefixIsSharedButTypeDiffers_ThanFrameIsKept()
         {
-            // ULoggerInitializer shares the "Appegy.UniLogger.ULogger" prefix but is a different type
             var stack = "Appegy.UniLogger.ULoggerInitializer:Configure () (at Assets/Init.cs:5)";
 
             StackTraceCleaner.RemoveNoiseFrames(stack).Should().Be(stack);

@@ -1,14 +1,8 @@
 namespace Appegy.UniLogger
 {
-    // Drops noise frames from a Unity-formatted stack trace. Every group below is an independent filter:
-    // to add one (e.g. UniTask frames) declare a new string[] and list it in NoiseGroups; to stop
-    // filtering a group, remove it from NoiseGroups. Matching is by namespace/type prefix at a frame
-    // boundary, so a group entry like "UnityEngine.UnitySynchronizationContext" drops every frame inside
-    // that type (and its nested types), wherever it appears in the trace.
     internal static class StackTraceCleaner
     {
-        // Our own logging plumbing.
-        private static readonly string[] UniLoggerFrames =
+        private static readonly string[] _uniLoggerFrames =
         {
             "Appegy.UniLogger.ULogger",
             "Appegy.UniLogger.ExtendedULogger",
@@ -18,8 +12,7 @@ namespace Appegy.UniLogger
             "Appegy.UniLogger.LogDispatcher",
         };
 
-        // Unity's logging entry points.
-        private static readonly string[] UnityLogFrames =
+        private static readonly string[] _unityLogFrames =
         {
             "UnityEngine.StackTraceUtility",
             "UnityEngine.Debug",
@@ -27,27 +20,24 @@ namespace Appegy.UniLogger
             "UnityEngine.UnityLogger",
         };
 
-        // UnityEngine.Assertions internals (the assert that raised, not the call site).
-        private static readonly string[] AssertionFrames =
+        private static readonly string[] _assertionFrames =
         {
             "UnityEngine.Assertions",
         };
 
-        // async/await state-machine, task, thread-pool and timer plumbing. "System.Threading" covers
-        // Tasks.*, ExecutionContext, ThreadPool*, Timer and the await continuations in one prefix.
-        private static readonly string[] AsyncMachineryFrames =
+        private static readonly string[] _asyncMachineryFrames =
         {
             "System.Runtime.CompilerServices.AsyncMethodBuilderCore",
             "System.Threading",
             "UnityEngine.UnitySynchronizationContext",
         };
 
-        private static readonly string[][] NoiseGroups =
+        private static readonly string[][] _noiseGroups =
         {
-            UniLoggerFrames,
-            UnityLogFrames,
-            AssertionFrames,
-            AsyncMachineryFrames,
+            _uniLoggerFrames,
+            _unityLogFrames,
+            _assertionFrames,
+            _asyncMachineryFrames,
         };
 
         public static string RemoveNoiseFrames(string stack)
@@ -83,7 +73,7 @@ namespace Appegy.UniLogger
 
         private static bool IsNoiseFrame(string stack, int lineStart, int lineLength)
         {
-            foreach (var group in NoiseGroups)
+            foreach (var group in _noiseGroups)
             {
                 foreach (var prefix in group)
                 {
@@ -100,7 +90,6 @@ namespace Appegy.UniLogger
 
         private static bool IsFrameBoundary(char c)
         {
-            // '.' ':' '(' ' ' end a type/namespace; '/' and '+' separate Unity/Mono nested types.
             return c == '.' || c == ':' || c == '(' || c == ' ' || c == '/' || c == '+';
         }
     }
