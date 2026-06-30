@@ -33,12 +33,12 @@ namespace Appegy.UniLogger
             "UnityEngine.Assertions",
         };
 
-        // async/await state-machine and task-continuation plumbing.
+        // async/await state-machine, task, thread-pool and timer plumbing. "System.Threading" covers
+        // Tasks.*, ExecutionContext, ThreadPool*, Timer and the await continuations in one prefix.
         private static readonly string[] AsyncMachineryFrames =
         {
             "System.Runtime.CompilerServices.AsyncMethodBuilderCore",
-            "System.Threading.ExecutionContext",
-            "System.Threading.Tasks.SynchronizationContextAwaitTaskContinuation",
+            "System.Threading",
             "UnityEngine.UnitySynchronizationContext",
         };
 

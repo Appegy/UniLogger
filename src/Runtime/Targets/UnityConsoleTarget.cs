@@ -16,21 +16,40 @@ namespace Appegy.UniLogger
         [HideInCallstack]
         protected internal override void Log(in LogEntry entry, string stackTrace)
         {
-            // Editor: route through the managed-callback console entry so the displayed stack is ours
-            // (clean, with clickable frames) and row double-click lands on the real call site.
-            if (ThreadDispatcher.IsMainThread && UnityConsoleBridge.TryLog(entry.LogLevel, entry.String, stackTrace, entry.Context))
+            // Editor main thread: managed-callback entry (clean stack + row double-click).
+            // Editor background thread: forward with the engine stack suppressed + our hyperlinked stack.
+            if (ThreadDispatcher.IsMainThread)
+            {
+                if (UnityConsoleBridge.TryLog(entry.LogLevel, entry.String, stackTrace, entry.Context)) return;
+            }
+            else if (UnityConsoleBridge.TryForwardCleanStack(entry.LogLevel, entry.String, stackTrace, entry.Context))
             {
                 return;
             }
 
-            // Player build, a background thread, or the bridge is unavailable: forward to the engine.
+            ForwardNatively(entry, entry.String);
+        }
+
+        [HideInCallstack]
+        protected internal override void LogException(Exception exception, in LogEntry entry)
+        {
+            // The formatted message already carries the cleaned exception stack.
+            if (ThreadDispatcher.IsMainThread)
+            {
+                if (UnityConsoleBridge.TryLog(LogLevel.Error, entry.String, null, entry.Context)) return;
+            }
+            else if (UnityConsoleBridge.TryForwardCleanStack(LogLevel.Error, entry.String, null, entry.Context))
+            {
+                return;
+            }
+
+            // Player build / fallback: native exception so crash reporters and the player log see it.
             var handler = ULogger.OriginalHandler;
             if (handler == null) return;
-
             ULogger.BeginSuppressNativeCapture();
             try
             {
-                handler.LogFormat(entry.LogLevel.ConvertToLogType(), entry.Context, "{0}", entry.String);
+                handler.LogException(exception, entry.Context);
             }
             finally
             {
@@ -39,23 +58,14 @@ namespace Appegy.UniLogger
         }
 
         [HideInCallstack]
-        protected internal override void LogException(Exception exception, in LogEntry entry)
+        private static void ForwardNatively(in LogEntry entry, string message)
         {
-            // Editor: route through the bridge so double-click lands on the first project frame
-            // (the formatted message already carries the cleaned exception stack).
-            if (ThreadDispatcher.IsMainThread && UnityConsoleBridge.TryLog(LogLevel.Error, entry.String, null, entry.Context))
-            {
-                return;
-            }
-
-            // Player build, a background thread, or the bridge is unavailable: forward to the engine.
             var handler = ULogger.OriginalHandler;
             if (handler == null) return;
-
             ULogger.BeginSuppressNativeCapture();
             try
             {
-                handler.LogException(exception, entry.Context);
+                handler.LogFormat(entry.LogLevel.ConvertToLogType(), entry.Context, "{0}", message);
             }
             finally
             {

@@ -39,6 +39,7 @@ namespace Appegy.UniLogger
         private static FieldInfo _fIdentifier;
 
         private static Delegate _doubleClickDelegate;
+        private static MethodInfo _logFormatWithOption;
 
         public static bool TryLog(LogLevel logLevel, string message, string stackTrace, Object context)
         {
@@ -74,6 +75,42 @@ namespace Appegy.UniLogger
             }
         }
 
+        // Editor + off-main-thread path: the managed-callback entry API is main-thread only, so forward to
+        // the original handler with NoStacktrace (no noisy native stack) and embed our own cleaned,
+        // hyperlinked stack in the message instead. Frames stay single-click navigable (no row double-click).
+        public static bool TryForwardCleanStack(LogLevel logLevel, string message, string stackTrace, Object context)
+        {
+            if (!EnsureReflection()) return false; // player build forwards natively instead
+            var handler = ULogger.OriginalHandler;
+            if (handler == null || _logFormatWithOption == null) return false;
+            try
+            {
+                var combined = string.IsNullOrEmpty(stackTrace) ? message : message + "\n" + stackTrace;
+                var finalMessage = Hyperlinkify(combined);
+                ULogger.BeginSuppressNativeCapture();
+                try
+                {
+                    _logFormatWithOption.Invoke(handler, new object[]
+                    {
+                        logLevel.ConvertToLogType(),
+                        LogOption.NoStacktrace,
+                        context,
+                        "{0}",
+                        new object[] { finalMessage },
+                    });
+                }
+                finally
+                {
+                    ULogger.EndSuppressNativeCapture();
+                }
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
         private static bool EnsureReflection()
         {
             if (_reflectionReady) return _reflectionAvailable;
@@ -92,6 +129,12 @@ namespace Appegy.UniLogger
                 _fColumn = _logEntryType.GetField("column", InstanceFlags);
                 _fMode = _logEntryType.GetField("mode", InstanceFlags);
                 _fIdentifier = _logEntryType.GetField("identifier", InstanceFlags);
+
+                // Original handler's LogFormat overload that honors LogOption (NoStacktrace), used to
+                // forward background-thread logs without Unity capturing its own (noisy) stack.
+                var debugLogHandlerType = FindType("UnityEngine.DebugLogHandler");
+                _logFormatWithOption = debugLogHandlerType?.GetMethod("LogFormat", InstanceFlags, null,
+                    new[] { typeof(LogType), typeof(LogOption), typeof(Object), typeof(string), typeof(object[]) }, null);
 
                 _reflectionAvailable = _addMessage != null && _fMessage != null && _fFile != null && _fMode != null && _fIdentifier != null;
                 return _reflectionAvailable;
