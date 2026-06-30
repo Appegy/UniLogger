@@ -16,13 +16,13 @@ namespace Appegy.UniLogger
         [HideInCallstack]
         protected internal override void Log(in LogEntry entry, string stackTrace)
         {
-            // Editor main thread: managed-callback entry (clean stack + row double-click).
-            // Editor background thread: forward with the engine stack suppressed + our hyperlinked stack.
+            // Editor main thread: managed-callback entry (clean stack + row double-click straight to source).
+            // Editor background thread: queue for the main thread (the console API is main-thread only).
             if (ThreadDispatcher.IsMainThread)
             {
                 if (UnityConsoleBridge.TryLog(entry.LogLevel, entry.String, stackTrace, entry.Context)) return;
             }
-            else if (UnityConsoleBridge.TryForwardCleanStack(entry.LogLevel, entry.String, stackTrace, entry.Context))
+            else if (UnityConsoleBridge.TryEnqueueForMainThread(entry.LogLevel, entry.String, stackTrace, entry.Context))
             {
                 return;
             }
@@ -38,7 +38,7 @@ namespace Appegy.UniLogger
             {
                 if (UnityConsoleBridge.TryLog(LogLevel.Error, entry.String, null, entry.Context)) return;
             }
-            else if (UnityConsoleBridge.TryForwardCleanStack(LogLevel.Error, entry.String, null, entry.Context))
+            else if (UnityConsoleBridge.TryEnqueueForMainThread(LogLevel.Error, entry.String, null, entry.Context))
             {
                 return;
             }

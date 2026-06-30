@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
@@ -7,10 +8,11 @@ using Object = UnityEngine.Object;
 
 namespace Appegy.UniLogger
 {
-    // Routes a log into the Unity editor console as a managed-callback entry so the displayed
-    // stack is fully ours (cleaned, with clickable <a href> frames) and double-clicking the row
-    // navigates to a source location we choose. Pure reflection against internal editor API, so it
-    // compiles in the runtime assembly and simply stays disabled in player builds.
+    // Routes a log into the Unity editor console as a managed-callback entry so the displayed stack is
+    // fully ours (cleaned, with clickable <a href> frames) and double-clicking the row navigates to a
+    // source location we choose. The console API is main-thread only, so logs from background threads are
+    // queued and replayed on the main thread by an editor update pump. Pure reflection against internal
+    // editor API, so it compiles in the runtime assembly and simply stays disabled in player builds.
     internal static class UnityConsoleBridge
     {
         private const int Marker = unchecked((int)0x754C4F47); // "uLOG"
@@ -23,6 +25,8 @@ namespace Appegy.UniLogger
         private const BindingFlags InstanceFlags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
 
         private static readonly Regex FrameWithLocation = new Regex(@"\(at (Assets[^:)\n]+):(\d+)\)", RegexOptions.Compiled);
+
+        private static readonly ConcurrentQueue<PendingWrite> Pending = new ConcurrentQueue<PendingWrite>();
 
         private static bool _reflectionReady;
         private static bool _reflectionAvailable;
@@ -39,7 +43,22 @@ namespace Appegy.UniLogger
         private static FieldInfo _fIdentifier;
 
         private static Delegate _doubleClickDelegate;
-        private static MethodInfo _logFormatWithOption;
+
+        private readonly struct PendingWrite
+        {
+            public readonly LogLevel Level;
+            public readonly string Message;
+            public readonly string StackTrace;
+            public readonly Object Context;
+
+            public PendingWrite(LogLevel level, string message, string stackTrace, Object context)
+            {
+                Level = level;
+                Message = message;
+                StackTrace = stackTrace;
+                Context = context;
+            }
+        }
 
         public static bool TryLog(LogLevel logLevel, string message, string stackTrace, Object context)
         {
@@ -75,39 +94,22 @@ namespace Appegy.UniLogger
             }
         }
 
-        // Editor + off-main-thread path: the managed-callback entry API is main-thread only, so forward to
-        // the original handler with NoStacktrace (no noisy native stack) and embed our own cleaned,
-        // hyperlinked stack in the message instead. Frames stay single-click navigable (no row double-click).
-        public static bool TryForwardCleanStack(LogLevel logLevel, string message, string stackTrace, Object context)
+        // Background-thread editor logs are queued here and flushed by DrainPending on the main thread, so
+        // they become real managed-callback entries (clean stack + row double-click) just like main-thread
+        // logs. Returns false in player builds, where the caller forwards natively instead.
+        public static bool TryEnqueueForMainThread(LogLevel logLevel, string message, string stackTrace, Object context)
         {
-            if (!EnsureReflection()) return false; // player build forwards natively instead
-            var handler = ULogger.OriginalHandler;
-            if (handler == null || _logFormatWithOption == null) return false;
-            try
+            if (!EnsureReflection()) return false;
+            Pending.Enqueue(new PendingWrite(logLevel, message, stackTrace, context));
+            return true;
+        }
+
+        // Called every editor update from the editor assembly (always on the main thread).
+        internal static void DrainPending()
+        {
+            while (Pending.TryDequeue(out var write))
             {
-                var combined = string.IsNullOrEmpty(stackTrace) ? message : message + "\n" + stackTrace;
-                var finalMessage = Hyperlinkify(combined);
-                ULogger.BeginSuppressNativeCapture();
-                try
-                {
-                    _logFormatWithOption.Invoke(handler, new object[]
-                    {
-                        logLevel.ConvertToLogType(),
-                        LogOption.NoStacktrace,
-                        context,
-                        "{0}",
-                        new object[] { finalMessage },
-                    });
-                }
-                finally
-                {
-                    ULogger.EndSuppressNativeCapture();
-                }
-                return true;
-            }
-            catch
-            {
-                return false;
+                TryLog(write.Level, write.Message, write.StackTrace, write.Context);
             }
         }
 
@@ -129,12 +131,6 @@ namespace Appegy.UniLogger
                 _fColumn = _logEntryType.GetField("column", InstanceFlags);
                 _fMode = _logEntryType.GetField("mode", InstanceFlags);
                 _fIdentifier = _logEntryType.GetField("identifier", InstanceFlags);
-
-                // Original handler's LogFormat overload that honors LogOption (NoStacktrace), used to
-                // forward background-thread logs without Unity capturing its own (noisy) stack.
-                var debugLogHandlerType = FindType("UnityEngine.DebugLogHandler");
-                _logFormatWithOption = debugLogHandlerType?.GetMethod("LogFormat", InstanceFlags, null,
-                    new[] { typeof(LogType), typeof(LogOption), typeof(Object), typeof(string), typeof(object[]) }, null);
 
                 _reflectionAvailable = _addMessage != null && _fMessage != null && _fFile != null && _fMode != null && _fIdentifier != null;
                 return _reflectionAvailable;
