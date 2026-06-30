@@ -3,14 +3,13 @@ using System.Collections.Concurrent;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
-using UnityEngine;
 using Object = UnityEngine.Object;
 
 namespace Appegy.UniLogger
 {
     internal static class UnityConsoleBridge
     {
-        private const int Marker = unchecked((int)0x754C4F47);
+        private const int Marker = 0x754C4F47;
 
         private const int ModeError = 0x100;
         private const int ModeWarning = 0x200;
@@ -156,26 +155,24 @@ namespace Appegy.UniLogger
         {
             try
             {
-                if (!(_fIdentifier.GetValue(entry) is int id) || id != Marker) return;
-                if (!(_fFile.GetValue(entry) is string file) || string.IsNullOrEmpty(file)) return;
+                if (_fIdentifier.GetValue(entry) is not Marker) return;
+                if (_fFile.GetValue(entry) is not string file || string.IsNullOrEmpty(file)) return;
                 var line = _fLine?.GetValue(entry) is int l ? l : 0;
                 var column = _fColumn?.GetValue(entry) is int c ? c : 0;
                 _openFile?.Invoke(null, new object[] { file, line, column });
             }
             catch
             {
+                // swallow
             }
         }
 
-        private static int ModeFor(LogLevel logLevel)
+        private static int ModeFor(LogLevel logLevel) => logLevel switch
         {
-            switch (logLevel)
-            {
-                case LogLevel.Warning: return ModeWarning;
-                case LogLevel.Error: return ModeError;
-                default: return ModeLog;
-            }
-        }
+            LogLevel.Warning => ModeWarning,
+            LogLevel.Error => ModeError,
+            _ => ModeLog
+        };
 
         private static string Hyperlinkify(string stackTrace)
         {

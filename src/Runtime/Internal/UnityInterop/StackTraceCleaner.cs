@@ -47,6 +47,7 @@ namespace Appegy.UniLogger
             var builder = StringBuilderPool.GetBuilder();
             try
             {
+                var removedAny = false;
                 var first = true;
                 var start = 0;
                 var length = stack.Length;
@@ -54,7 +55,11 @@ namespace Appegy.UniLogger
                 {
                     var lineEnd = stack.IndexOf('\n', start);
                     var lineStop = lineEnd < 0 ? length : lineEnd;
-                    if (!IsNoiseFrame(stack, start, lineStop - start))
+                    if (IsNoiseFrame(stack, start, lineStop - start))
+                    {
+                        removedAny = true;
+                    }
+                    else
                     {
                         if (!first) builder.Append('\n');
                         builder.Append(stack, start, lineStop - start);
@@ -63,7 +68,7 @@ namespace Appegy.UniLogger
                     if (lineEnd < 0) break;
                     start = lineEnd + 1;
                 }
-                return builder.ToString();
+                return removedAny ? builder.ToString() : stack;
             }
             finally
             {
@@ -90,7 +95,7 @@ namespace Appegy.UniLogger
 
         private static bool IsFrameBoundary(char c)
         {
-            return c == '.' || c == ':' || c == '(' || c == ' ' || c == '/' || c == '+';
+            return c is '.' or ':' or '(' or ' ' or '/' or '+';
         }
     }
 }
