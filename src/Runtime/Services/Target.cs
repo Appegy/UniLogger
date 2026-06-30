@@ -4,35 +4,24 @@ using static Appegy.UniLogger.LogLevelExtensions;
 
 namespace Appegy.UniLogger
 {
-    public abstract class TargetBase
+    public abstract class Target
     {
+        private readonly bool[] _stackTraceLogType;
+
         [NotNull]
         public Formatter Formatter { get; }
 
         [NotNull]
         public Filterer Filterer { get; }
 
-        protected TargetBase() : this(null, null)
-        {
-        }
-
-        protected TargetBase([CanBeNull] Formatter formatter = null, [CanBeNull] Filterer filterer = null)
-        {
-            Formatter = formatter ?? new Formatter();
-            Filterer = filterer ?? new Filterer(true);
-        }
-    }
-
-    public abstract class Target : TargetBase
-    {
-        private readonly bool[] _stackTraceLogType;
-
         protected Target() : this(null, null)
         {
         }
 
-        protected Target([CanBeNull] Formatter formatter = null, [CanBeNull] Filterer filterer = null) : base(formatter, filterer)
+        protected Target([CanBeNull] Formatter formatter = null, [CanBeNull] Filterer filterer = null)
         {
+            Formatter = formatter ?? new Formatter();
+            Filterer = filterer ?? new Filterer(true);
             _stackTraceLogType = new bool[LogTypes.Count];
             foreach (var logType in LogTypes)
             {

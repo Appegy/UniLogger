@@ -54,7 +54,7 @@ namespace Appegy.UniLogger
             _suppressNativeCapture = false;
         }
 
-        public static IEnumerable<TargetBase> GetTargets()
+        public static IEnumerable<Target> GetTargets()
         {
             if (Data == null) yield break;
             foreach (var target in Data.Targets)
@@ -63,7 +63,7 @@ namespace Appegy.UniLogger
             }
         }
 
-        public static T GetTarget<T>() where T : TargetBase
+        public static T GetTarget<T>() where T : Target
         {
             if (Data == null) return null;
             foreach (var target in Data.Targets)
