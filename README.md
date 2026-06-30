@@ -57,9 +57,9 @@ I strongly discourage using `Debug.Log`, `Debug.LogWarning` and `Debug.LogError`
 
 ## Quick start
 
-First of all you have to initialize `ULogger`. To do this you should call the `ULogger.Initialize(Formatter, Filterer)` method. It's best to do this at the very start of your application, before any logs are generated, to ensure that nothing is missed. The most effective way to achieve this is by using a static method with the [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)](https://docs.unity3d.com/ScriptReference/RuntimeInitializeLoadType.SubsystemRegistration.html) attribute.
+First of all you have to initialize `ULogger` by calling `ULogger.Initialize()`, then register the targets you need. `ULogger` ships with no targets by default, so to mirror logs to the Unity console you add a `UnityConsoleTarget`. It's best to do this at the very start of your application, before any logs are generated, to ensure that nothing is missed. The most effective way to achieve this is by using a static method with the [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)](https://docs.unity3d.com/ScriptReference/RuntimeInitializeLoadType.SubsystemRegistration.html) attribute.
 
-During initialization, you will need to configure the Formatter and Filterer to be used for logs sent to the Unity console. You can learn how to [format](#logs-formatting) and [filter](#logs-filtering) logs in the respective sections.
+Each target carries its own Formatter and Filterer. You can learn how to [format](#logs-formatting) and [filter](#logs-filtering) logs in the respective sections.
 
 ```C#
 using UnityEngine;
@@ -70,16 +70,17 @@ public static class ULoggerInitializer
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     private static void AutoConfigureLogger()
     {
-        // Customize logs formatter for unity target
+        // Customize logs formatter for the unity console target
         var formatter = Application.isEditor
             ? new Formatter(FormatOptions.RichText | FormatOptions.Tags)
             : new Formatter(FormatOptions.Tags | FormatOptions.LogType);
 
-        // Prepare filterer for unity target (by default all logs are allowed)
+        // Prepare filterer for the unity console target (by default all logs are allowed)
         var filterer = new Filterer(true);
 
-        // When formatter and filterer are ready - initialize logger 
-        ULogger.Initialize(formatter, filterer);
+        // Initialize the logger and register the unity console target
+        ULogger.Initialize();
+        ULogger.AddTarget(new UnityConsoleTarget(formatter, filterer));
     }
 }
 ```
@@ -226,20 +227,24 @@ Tag colors are derived deterministically from the tag name, so a given tag alway
 
 A target is where formatted logs are written. Each target owns its own `Formatter` and `Filterer`, so formatting and filtering are decided per destination.
 
-The built-in `UnityTarget` writes to the Unity console. You configure it when you initialize the logger - the `formatter` and `filterer` you pass become the console target's settings:
+`UnityConsoleTarget` writes to the Unity console. In the editor it renders a cleaned, clickable stack trace and double-clicking the entry jumps straight to the call site. You register it with its own formatter and filterer:
 
 ```C#
-ULogger.Initialize(formatter, filterer);
+ULogger.AddTarget(new UnityConsoleTarget(formatter, filterer));
+```
+
+Other built-in targets: `FileTarget` (rolling log files) and `InMemoryTarget` (ring buffer). You can also write your own by deriving from `Target`. Register any number of them:
+
+```C#
+ULogger.AddTarget(new FileTarget(path, fileSizeLimitBytes: 1024 * 1024, retainedFileCountLimit: 5));
 ```
 
 You can inspect the active targets at runtime:
 
 ```C#
 foreach (var target in ULogger.GetTargets()) { /* ... */ }
-var unityTarget = ULogger.GetTarget<UnityTarget>();
+var consoleTarget = ULogger.GetTarget<UnityConsoleTarget>();
 ```
-
-> Routing logs to additional destinations (files, remote services, and so on) is on the roadmap and not yet part of the public API. Today the Unity console is the active target.
 
 ## Removing logs from release builds
 

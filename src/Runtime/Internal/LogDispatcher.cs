@@ -31,7 +31,6 @@ namespace Appegy.UniLogger
             }
             catch (InvalidOperationException)
             {
-                // adding completed concurrently with terminate
             }
         }
 
@@ -81,7 +80,6 @@ namespace Appegy.UniLogger
                 }
                 catch
                 {
-                    // never fail the writer loop on a target flush
                 }
             }
         }

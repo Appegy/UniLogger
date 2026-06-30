@@ -59,7 +59,7 @@ namespace Appegy.UniLogger
         [HideInCallstack]
         public static void Trace(this ULogger logger, string message, Color color, Object context)
         {
-            logger.SendLogToUnity(LogLevel.Trace, message, color, context);
+            logger.SendLog(LogLevel.Trace, message, color, context);
         }
 
         #endregion
@@ -99,7 +99,7 @@ namespace Appegy.UniLogger
         [HideInCallstack]
         public static void Log(this ULogger logger, string message, Color color, Object context)
         {
-            logger.SendLogToUnity(LogLevel.Log, message, color, context);
+            logger.SendLog(LogLevel.Log, message, color, context);
         }
 
         #endregion
@@ -139,7 +139,7 @@ namespace Appegy.UniLogger
         [HideInCallstack]
         public static void LogWarning(this ULogger logger, string message, Color color, Object context)
         {
-            logger.SendLogToUnity(LogLevel.Warning, message, color, context);
+            logger.SendLog(LogLevel.Warning, message, color, context);
         }
 
         #endregion
@@ -179,7 +179,7 @@ namespace Appegy.UniLogger
         [HideInCallstack]
         public static void LogError(this ULogger logger, string message, Color color, Object context)
         {
-            logger.SendLogToUnity(LogLevel.Error, message, color, context);
+            logger.SendLog(LogLevel.Error, message, color, context);
         }
 
         #endregion
