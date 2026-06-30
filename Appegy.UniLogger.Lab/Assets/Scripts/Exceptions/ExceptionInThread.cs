@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading.Tasks;
 using UnityEngine;
 
@@ -11,17 +11,18 @@ namespace Appegy.UniLogger.Example
         [SerializeField]
         private float _throwAfter = 3f;
 
-        private void Start()
+        private async void Start()
         {
-            Task.Run(ThrowTask);
+            // ThrowTask runs on a thread-pool thread (the log inside it comes from a background thread).
+            // Awaiting it observes the faulted task and surfaces the exception on the main thread right
+            // away, instead of waiting for the GC to finalize an unobserved task.
+            await Task.Run(ThrowTask);
         }
 
         private async Task ThrowTask()
         {
             await Task.Delay(TimeSpan.FromSeconds(_throwAfter));
             _logger.Log("Throwing from threaded task");
-
-            // Won't be showed by Unity's default logger
             throw new Exception("Exception from threaded task");
         }
     }
