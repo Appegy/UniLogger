@@ -74,6 +74,7 @@ namespace Appegy.UniLogger
                 }
                 catch
                 {
+                    // swallow
                 }
             }
 
@@ -125,6 +126,7 @@ namespace Appegy.UniLogger
                     }
                     catch
                     {
+                        // swallow
                     }
                 }
                 return;
@@ -154,6 +156,7 @@ namespace Appegy.UniLogger
             }
             catch
             {
+                // swallow
             }
         }
 

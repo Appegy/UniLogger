@@ -47,7 +47,6 @@ namespace Appegy.UniLogger
             var builder = StringBuilderPool.GetBuilder();
             try
             {
-                var removedAny = false;
                 var first = true;
                 var start = 0;
                 var length = stack.Length;
@@ -55,11 +54,7 @@ namespace Appegy.UniLogger
                 {
                     var lineEnd = stack.IndexOf('\n', start);
                     var lineStop = lineEnd < 0 ? length : lineEnd;
-                    if (IsNoiseFrame(stack, start, lineStop - start))
-                    {
-                        removedAny = true;
-                    }
-                    else
+                    if (!IsNoiseFrame(stack, start, lineStop - start))
                     {
                         if (!first) builder.Append('\n');
                         builder.Append(stack, start, lineStop - start);
@@ -68,7 +63,7 @@ namespace Appegy.UniLogger
                     if (lineEnd < 0) break;
                     start = lineEnd + 1;
                 }
-                return removedAny ? builder.ToString() : stack;
+                return builder.ToString();
             }
             finally
             {
