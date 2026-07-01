@@ -6,7 +6,7 @@ namespace Appegy.UniLogger
         {
             "Appegy.UniLogger.ULogger",
             "Appegy.UniLogger.ExtendedULogger",
-            "Appegy.UniLogger.UnityConsoleTarget",
+            "Appegy.UniLogger.UnityTarget",
             "Appegy.UniLogger.UnityConsoleBridge",
             "Appegy.UniLogger.UnityExceptionFormatter",
             "Appegy.UniLogger.LogDispatcher",

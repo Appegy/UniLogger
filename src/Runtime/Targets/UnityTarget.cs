@@ -4,11 +4,11 @@ using UnityEngine;
 
 namespace Appegy.UniLogger
 {
-    public class UnityConsoleTarget : Target
+    public class UnityTarget : Target
     {
         public override bool RunSynchronously => true;
 
-        public UnityConsoleTarget([CanBeNull] Formatter formatter = null, [CanBeNull] Filterer filterer = null)
+        public UnityTarget([CanBeNull] Formatter formatter = null, [CanBeNull] Filterer filterer = null)
             : base(formatter, filterer)
         {
         }

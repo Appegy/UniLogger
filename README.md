@@ -57,7 +57,7 @@ I strongly discourage using `Debug.Log`, `Debug.LogWarning` and `Debug.LogError`
 
 ## Quick start
 
-First of all you have to initialize `ULogger` by calling `ULogger.Initialize()`, then register the targets you need. `ULogger` ships with no targets by default, so to mirror logs to the Unity console you add a `UnityConsoleTarget`. It's best to do this at the very start of your application, before any logs are generated, to ensure that nothing is missed. The most effective way to achieve this is by using a static method with the [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)](https://docs.unity3d.com/ScriptReference/RuntimeInitializeLoadType.SubsystemRegistration.html) attribute.
+First of all you have to initialize `ULogger` by calling `ULogger.Initialize()`, then register the targets you need. `ULogger` ships with no targets by default, so to mirror logs to the Unity console you add a `UnityTarget`. It's best to do this at the very start of your application, before any logs are generated, to ensure that nothing is missed. The most effective way to achieve this is by using a static method with the [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)](https://docs.unity3d.com/ScriptReference/RuntimeInitializeLoadType.SubsystemRegistration.html) attribute.
 
 Each target carries its own Formatter and Filterer. You can learn how to [format](#logs-formatting) and [filter](#logs-filtering) logs in the respective sections.
 
@@ -80,7 +80,7 @@ public static class ULoggerInitializer
 
         // Initialize the logger and register the unity console target
         ULogger.Initialize();
-        ULogger.AddTarget(new UnityConsoleTarget(formatter, filterer));
+        ULogger.AddTarget(new UnityTarget(formatter, filterer));
     }
 }
 ```
@@ -227,10 +227,10 @@ Tag colors are derived deterministically from the tag name, so a given tag alway
 
 A target is where formatted logs are written. Each target owns its own `Formatter` and `Filterer`, so formatting and filtering are decided per destination.
 
-`UnityConsoleTarget` writes to the Unity console. In the editor it renders a cleaned, clickable stack trace and double-clicking the entry jumps straight to the call site. You register it with its own formatter and filterer:
+`UnityTarget` writes to the Unity console. In the editor it renders a cleaned, clickable stack trace and double-clicking the entry jumps straight to the call site. You register it with its own formatter and filterer:
 
 ```C#
-ULogger.AddTarget(new UnityConsoleTarget(formatter, filterer));
+ULogger.AddTarget(new UnityTarget(formatter, filterer));
 ```
 
 Other built-in targets: `FileTarget` (rolling log files) and `InMemoryTarget` (ring buffer). You can also write your own by deriving from `Target`. Register any number of them:
@@ -243,7 +243,7 @@ You can inspect the active targets at runtime:
 
 ```C#
 foreach (var target in ULogger.GetTargets()) { /* ... */ }
-var consoleTarget = ULogger.GetTarget<UnityConsoleTarget>();
+var consoleTarget = ULogger.GetTarget<UnityTarget>();
 ```
 
 ## Removing logs from release builds
