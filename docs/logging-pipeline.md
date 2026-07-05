@@ -1,39 +1,30 @@
 # UniLogger - Log Processing Pipeline
 
-**Scope:** the life of a single log - from the call that creates it to the moment it reaches a
-target's `Log` / `LogException`. This document deliberately stops at the target boundary.
-
-**Out of scope** (separate documents):
-
-- Built-in targets and how each one renders or stores a log - [`targets.md`](targets.md)
-- `Formatter` and `Filterer` details (options, tag colors, level/tag rules) - [`formatting-and-filtering.md`](formatting-and-filtering.md)
-- Logger lifecycle (`Initialize` / `Terminate`, play mode, handler steal) - [`logger-lifecycle.md`](logger-lifecycle.md)
+This document traces the life of a single log in UniLogger: from the call that creates it to the
+moment it reaches a target (`Log` or `LogException`). Every box in the diagrams maps to real code.
 
 ---
 
 ## Table of contents
 
 1. [Big picture](#1-big-picture)
-2. [Entry points](#2-entry-points)
-3. [The core: `SendLog`](#3-the-core-sendlog)
-4. [Reaching a target: filter then format](#4-reaching-a-target-filter-then-format)
-5. [Sync vs async and the writer thread](#5-sync-vs-async-and-the-writer-thread)
-6. [Exceptions](#6-exceptions)
-7. [Stack-trace handling](#7-stack-trace-handling)
-8. [Recursion guard and the native feedback loop](#8-recursion-guard-and-the-native-feedback-loop)
+2. [The core: `SendLog`](#2-the-core-sendlog)
+3. [Sync vs async and the writer thread](#3-sync-vs-async-and-the-writer-thread)
+4. [Exceptions](#4-exceptions)
+5. [Stack-trace handling](#5-stack-trace-handling)
+6. [Recursion guard and the native feedback loop](#6-recursion-guard-and-the-native-feedback-loop)
 
 ---
 
 ## 1. Big picture
 
-UniLogger **steals** `Debug.unityLogger.logHandler` at `Initialize()`. From that moment every managed
-`Debug.Log*` / `Debug.LogException` in the whole project is routed into the same pipeline as
-first-class `ULogger` calls. There is no round-trip through Unity just to grab a call stack:
-UniLogger captures and cleans the stack itself.
+UniLogger takes over Unity's log handler in `Initialize()`. After that, every `Debug.Log*` and
+`Debug.LogException` in the project goes through the same path as `ULogger` calls. UniLogger also
+builds and cleans the call stack itself, so there is no extra trip through Unity to get it.
 
-Every log ends up in one of two lanes. A target declares whether it runs synchronously
-(`RunSynchronously`); **sync** targets are delivered inline on the calling thread, **async** targets
-are handed to a single background writer thread. The pipeline's job ends when it calls the target.
+Each log goes to one of two kinds of target. **Sync** targets get the log at once, on the same
+thread that logged it. **Async** targets go to a queue that one background thread writes out. A
+target picks its kind with `RunSynchronously`.
 
 ```mermaid
 flowchart TD
@@ -62,152 +53,112 @@ flowchart TD
     AT -->|"writer thread"| ATT["Async target(s)"]
 ```
 
----
-
-## 2. Entry points
-
-Everything funnels into one of three core methods: `SendLog` (normal logs), `DispatchException`
-(exceptions), and `BroadcastUnobservedLog` (native logs that bypassed our handler).
-
-| # | Trigger | Reaches core via | Notes |
-| --- | --- | --- | --- |
-| 1 | `ULogger.Log*` | `ULogger.SendLog` | Compiled out entirely when the level is disabled (`[Conditional]`) |
-| 2 | `ULogger.LogException(ex)` | `ULogger.DispatchException` | Tags are dropped for exceptions |
-| 3 | `Debug.Log*` | `UnityLogger.LogFormat` -> `SendLog` | Tagged `Unsorted` |
-| 4 | `Debug.LogException`, uncaught exceptions | `UnityLogger.LogException` -> `DispatchException` | |
-| 5 | `TaskScheduler.UnobservedTaskException` | `OnUnobservedTaskException` -> `DispatchException` | Fires on GC finalization |
-| 6 | native / engine logs (`Application.logMessageReceivedThreaded`) | `OnLogMessageReceivedThreaded` -> `BroadcastUnobservedLog` | Only catches logs that reached **native** without passing our handler; skips `Exception` type and suppressed forwards; delivered to every target that captures native logs (a target may opt out, see [`targets.md`](targets.md)) |
-
-Entry point 6 is the safety net for logs originating in native/engine code, which never go through
-the managed `logHandler`.
+Native and engine logs (not from `ULogger` or `Debug`) are caught by `logMessageReceivedThreaded`
+and sent to the targets that accept native logs. Some targets opt out of these (see
+[`targets.md`](targets.md)).
 
 ---
 
-## 3. The core: `SendLog`
+## 2. The core: `SendLog`
 
-`SendLog` is the hot path for normal logs.
+`SendLog` is the main path for normal logs.
 
 ```mermaid
 flowchart TD
-    START["ULogger.Log*"] --> NULLCHK{"Initialized?<br/>(Data != null)"}
-    NULLCHK -->|"no"| FALLBACK["Debug.unityLogger.Log(...)<br/>(nothing is lost before Initialize)"]
-    NULLCHK -->|"yes"| ENTRY["build LogEntry<br/>tags, level, message, color, context,<br/>timestamp, thread id"]
-
-    ENTRY --> NEEDS{"NeedsStackTrace?<br/>any target wants a stack for this<br/>level AND its filter would allow it"}
-    NEEDS -->|"yes"| CAP["capture + clean the stack<br/>ONCE, shared by all targets"]
-    NEEDS -->|"no"| SKIP["stackTrace = null"]
-
-    CAP --> SYNC
+    START["ULogger.Log*"] --> NULLCHK{"Initialized?"}
+    NULLCHK -->|"no"| FALLBACK["log via Debug.unityLogger"]
+    NULLCHK -->|"yes"| ENTRY["build LogEntry"]
+    ENTRY --> NEEDS{"stack trace needed?"}
+    NEEDS -->|"yes"| CAP["capture and clean stack"]
+    NEEDS -->|"no"| SKIP["no stack"]
+    CAP --> SYNC["deliver to sync targets"]
     SKIP --> SYNC
-    SYNC["deliver to sync targets<br/>(inline, on the caller thread)"] --> ASYNCCHK{"any async targets?"}
-    ASYNCCHK -->|"yes"| ENQ["enqueue on the writer thread"]
-    ASYNCCHK -->|"no"| DONE["return"]
+    SYNC --> ASYNCCHK{"async targets?"}
+    ASYNCCHK -->|"yes"| ENQ["queue for writer thread"]
+    ASYNCCHK -->|"no"| DONE["done"]
     ENQ --> DONE
 ```
 
 Key points:
 
-- **The stack is captured at most once**, and only if some target actually needs it for this level.
-  The captured string is shared across all targets (a target can still opt out per level).
-- **Sync targets run inline** on the thread that called the log. This keeps a main-thread log on the
-  main thread through to its target.
-- **Async targets get a copy of the entry** pushed onto the dispatcher queue.
+- Before `Initialize()` there are no targets yet, so the log falls back to `Debug.unityLogger`.
+  Nothing is lost at startup.
+- The stack is captured **once**, and only if some target needs it for this level. All targets share
+  that one string.
+- Sync targets run on the calling thread, so a main-thread log stays on the main thread.
+- Async targets get a copy of the log on the queue.
+- Each target then applies its own filter and formatter before writing. See
+  [`formatting-and-filtering.md`](formatting-and-filtering.md).
 
 ---
 
-## 4. Reaching a target: filter then format
+## 3. Sync vs async and the writer thread
 
-Both the inline sync path and the async writer thread hand each normal log to a target the same way:
-the target's own **filter** decides pass/drop, then its **formatter** turns the entry into the final
-string, then `target.Log` is called.
-
-```mermaid
-flowchart LR
-    IN["entry (+ optional stack)"] --> F{"filter:<br/>allowed?"}
-    F -->|"no"| DROP["dropped for this target"]
-    F -->|"yes"| FMT["format"]
-    FMT --> CALL["target.Log(entry, stack)"]
-```
-
-Filter and formatter are **per target**, so the same log can look different (or be dropped) in one
-target and not another. The rules and formatting options are described in
-[`formatting-and-filtering.md`](formatting-and-filtering.md).
-
----
-
-## 5. Sync vs async and the writer thread
-
-Which lane a target uses is a property of the target (`RunSynchronously`); the pipeline only cares
-about the split. Sync targets are delivered inline on the calling thread. Async targets are queued
-and drained by a single background writer thread:
+A target is either sync or async (`RunSynchronously`). Sync targets get the log right away, on the
+thread that logged it. Async targets go to a queue. One background thread, `UniLogger.Writer`, reads
+the queue and writes to them.
 
 ```mermaid
 flowchart TD
-    subgraph Producers["any thread"]
-        P["enqueue(record)"]
-    end
-    P --> Q[["BlockingCollection queue"]]
-
-    subgraph Writer["UniLogger.Writer thread"]
-        T["Take() one record (blocks)"] --> D["deliver to async targets"]
-        D --> DR{"more queued?<br/>TryTake(0)"}
-        DR -->|"yes"| D
-        DR -->|"no"| FL["Flush() targets once"]
-        FL --> T
-    end
-    Q --> T
+    P["any thread: enqueue(record)"] --> Q[["BlockingCollection queue"]]
+    Q --> T["writer thread: Take() (blocks)"]
+    T --> D["deliver to async targets"]
+    D --> DR{"more in queue?"}
+    DR -->|"yes"| D
+    DR -->|"no"| FL["Flush() targets"]
+    FL --> T
 ```
 
-- One record is taken (blocking), then the queue is **drained in a tight loop** and targets are
-  flushed once per batch - good throughput without a per-line flush.
-- On shutdown the queue stops accepting, the writer drains what remains and flushes a final time, so
-  nothing queued is lost.
+- The thread takes one record, then also takes any others already waiting, and flushes once after the
+  batch. This is fast and avoids a flush per line.
+- On shutdown the queue closes, the thread writes what is left and flushes one last time, so nothing
+  in the queue is lost.
 
 ---
 
-## 6. Exceptions
+## 4. Exceptions
 
-Exceptions take a separate route. They are unwrapped, formatted **once** into a single string
-(type + message + cleaned stack), and delivered straight to `target.LogException` - **bypassing the
-per-target filter and formatter** (an exception is a raw event and carries no tags).
+Exceptions take their own path. UniLogger unwraps them, formats them once (type, message, clean
+stack), and calls `target.LogException` directly. This path skips the per-target filter and
+formatter, because an exception has no tags and is already a full text block.
 
 ```mermaid
 flowchart TD
-    IN["DispatchException(ex, context)"] --> NULLCHK{"Initialized?"}
-    NULLCHK -->|"no"| FB["forward to Debug.unityLogger.logHandler"]
-    NULLCHK -->|"yes"| UNWRAP["UnwrapException:<br/>AggregateException with a single<br/>inner -> that inner exception"]
-    UNWRAP --> FORMAT["format once:<br/>TypeName: Message + cleaned stack"]
-    FORMAT --> SYNC["sync targets: target.LogException (inline)"]
-    FORMAT --> ASYNCCHK{"any async targets?"}
-    ASYNCCHK -->|"yes"| ENQ["enqueue on the writer thread"]
-    ASYNCCHK -->|"no"| END2["done"]
-    ENQ --> END2
+    IN["ULogger.LogException"] --> NULLCHK{"Initialized?"}
+    NULLCHK -->|"no"| FB["forward to Debug.unityLogger"]
+    NULLCHK -->|"yes"| UNWRAP["unwrap single AggregateException"]
+    UNWRAP --> FORMAT["format once: type, message, clean stack"]
+    FORMAT --> SYNC["sync targets: LogException"]
+    FORMAT --> ASYNC["async targets: queue"]
 ```
 
-Building the exception string (`TypeName: Message`, then the stack) is where the two stack sources
-diverge: a present `Exception.StackTrace` (Mono format) is converted, otherwise the current stack is
-extracted. Either way it is run through the noise filter. See [next section](#7-stack-trace-handling).
+For the stack, UniLogger uses `Exception.StackTrace` when it is set (Mono format, which it converts),
+or the current stack otherwise. Both go through the noise filter. See
+[Stack-trace handling](#5-stack-trace-handling).
 
 ---
 
-## 7. Stack-trace handling
+## 5. Stack-trace handling
 
-Two independent components shape stacks. Which run depends on the path.
+Two parts shape a stack. Which one runs depends on the path.
+
+Normal logs:
 
 ```mermaid
 flowchart LR
-    subgraph normal["Normal log path"]
-        N1["extract current stack<br/>(already Unity format)"] --> N2["RemoveNoiseFrames"]
-    end
-    subgraph exc["Exception path"]
-        E1["ex.StackTrace (Mono string)"] --> E2["convert Mono -> Unity format,<br/>relativize path"]
-        E2 --> E3["RemoveNoiseFrames"]
-    end
+    N1["extract current stack<br/>(already Unity format)"] --> N2["remove noise frames"]
 ```
 
-### Noise filtering - `RemoveNoiseFrames`
+Exceptions:
 
-Strips whole stack lines whose start matches a known prefix at a frame boundary
+```mermaid
+flowchart LR
+    E1["Exception.StackTrace (Mono)"] --> E2["convert to Unity format,<br/>make path relative"] --> E3["remove noise frames"]
+```
+
+### Noise filtering (`RemoveNoiseFrames`)
+
+It removes stack lines that start with a known prefix, matched at a frame boundary
 (`. : ( space / +`). Prefixes are grouped so filters are easy to add or remove:
 
 | Group | Removes frames from |
@@ -217,13 +168,13 @@ Strips whole stack lines whose start matches a known prefix at a frame boundary
 | Assertions | `UnityEngine.Assertions` |
 | Async machinery | `AsyncMethodBuilderCore`, `System.Threading`, `UnitySynchronizationContext` |
 
-The boundary check prevents false positives: a user type like `Appegy.UniLogger.ULoggerFoo` is
-**not** stripped, because the char after `ULogger` (`F`) is not a boundary.
+The boundary check avoids false hits: a user type like `Appegy.UniLogger.ULoggerFoo` is kept,
+because the character after `ULogger` (`F`) is not a boundary.
 
-### Mono -> Unity conversion (exceptions only)
+### Mono to Unity conversion (exceptions only)
 
-`Exception.StackTrace` is a Mono-format string. `new StackTrace(exception)` would lose the original
-throw site across `await`, so the converter parses the string instead:
+`Exception.StackTrace` is a Mono-format string. `new StackTrace(exception)` would lose the real throw
+site across `await`, so UniLogger parses the string instead:
 
 ```
   at NS.Type.Method (args) [0x00000] in /proj/Assets/Foo.cs:23
@@ -231,33 +182,33 @@ throw site across `await`, so the converter parses the string instead:
 NS.Type:Method (args) (at Assets/Foo.cs:23)
 ```
 
-The path is relativized against the project root; frames outside the project keep their method but
-drop the (unusable) location. In a build the embedded source paths do not match the device, so
-exception locations are dropped there - expected.
+The path is made relative to the project root. Frames outside the project keep the method name but
+lose the file location. In a build the source paths do not match the device, so exception locations
+are dropped there. This is expected.
 
 ---
 
-## 8. Recursion guard and the native feedback loop
+## 6. Recursion guard and the native feedback loop
 
-The pipeline may end up calling the **native** `Debug` handler (a target's fallback path, or the
-raw-exception forward). That native write fires `Application.logMessageReceivedThreaded`, which we are
-subscribed to for entry point 6 - so without a guard, a forwarded log would bounce right back into
-the async targets a second time.
+Sometimes the pipeline calls Unity's **native** log handler (a target's fallback, or the
+raw-exception forward). That native write fires `Application.logMessageReceivedThreaded`, which
+UniLogger listens to for native logs. Without a guard, a forwarded log would come back and reach the
+async targets a second time.
 
-`_suppressNativeCapture` (a `[ThreadStatic]` flag) closes the loop:
+`_suppressNativeCapture` (a `[ThreadStatic]` flag) stops this:
 
 ```mermaid
 flowchart TD
     F["forward to native handler"] --> B["set _suppressNativeCapture = true"]
     B --> N["native LogFormat / LogException"]
-    N --> EV["Application.logMessageReceivedThreaded fires"]
-    EV --> CH{"_suppressNativeCapture set?"}
+    N --> EV["logMessageReceivedThreaded fires"]
+    EV --> CH{"flag set?"}
     CH -->|"yes"| IGN["ignored - no double delivery"]
-    CH -->|"no"| CAP2["captured (a genuine native log)"]
+    CH -->|"no"| CAP2["captured (a real native log)"]
     N --> E["clear the flag (finally)"]
 ```
 
-The set/clear pair is wrapped in `try/finally`, so the flag can never get stuck, and it is
-`[ThreadStatic]`, so it cannot leak between threads. In the **editor** the normal console path writes
-directly to the editor console (never touches native), so the loop only arises on the native-forward
-path (mainly the player).
+The flag is set and cleared in a `try/finally`, so it never stays stuck, and it is `[ThreadStatic]`,
+so it does not leak between threads. In the editor the normal console path writes to the editor
+console directly and never touches native, so this loop only happens on the native-forward path
+(mostly in a player build).
