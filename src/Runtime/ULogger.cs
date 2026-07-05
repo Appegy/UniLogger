@@ -75,18 +75,12 @@ namespace Appegy.UniLogger
             }
 
             var exceptions = ExceptionListPool.Get();
-            try
+            FlattenForLog(exception, exceptions);
+            for (var i = 0; i < exceptions.Count; i++)
             {
-                FlattenForLog(exception, exceptions);
-                for (var i = 0; i < exceptions.Count; i++)
-                {
-                    DispatchSingleException(data, exceptions[i], context);
-                }
+                DispatchSingleException(data, exceptions[i], context);
             }
-            finally
-            {
-                ExceptionListPool.Return(exceptions);
-            }
+            ExceptionListPool.Return(exceptions);
         }
 
         internal static void FlattenForLog(Exception exception, List<Exception> output)
