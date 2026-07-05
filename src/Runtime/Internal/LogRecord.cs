@@ -7,12 +7,14 @@ namespace Appegy.UniLogger
         public readonly LogEntry Entry;
         public readonly string StackTrace;
         public readonly Exception Exception;
+        public readonly bool NativeBroadcast;
 
-        public LogRecord(in LogEntry entry, string stackTrace)
+        public LogRecord(in LogEntry entry, string stackTrace, bool nativeBroadcast = false)
         {
             Entry = entry;
             StackTrace = stackTrace;
             Exception = null;
+            NativeBroadcast = nativeBroadcast;
         }
 
         public LogRecord(Exception exception, in LogEntry entry)
@@ -20,6 +22,7 @@ namespace Appegy.UniLogger
             Exception = exception;
             Entry = entry;
             StackTrace = null;
+            NativeBroadcast = false;
         }
     }
 }

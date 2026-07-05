@@ -8,6 +8,8 @@ namespace Appegy.UniLogger
     {
         public override bool RunSynchronously => true;
 
+        public override bool CapturesNativeLogs => false;
+
         public UnityTarget([CanBeNull] Formatter formatter = null, [CanBeNull] Filterer filterer = null)
             : base(formatter, filterer)
         {

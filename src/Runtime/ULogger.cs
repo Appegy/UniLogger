@@ -45,10 +45,23 @@ namespace Appegy.UniLogger
         internal void BroadcastUnobservedLog(string message, string stacktrace, LogType type)
         {
             var data = Data;
-            if (data == null || data.AsyncTargets.Length == 0) return;
+            if (data == null) return;
             var logLevel = type.ConvertToLogLevel();
             var entry = new LogEntry(_tags, logLevel, message, default, default, DateTime.Now, Thread.CurrentThread.ManagedThreadId);
-            data.Dispatcher.Enqueue(new LogRecord(in entry, stacktrace));
+
+            var syncTargets = data.SyncTargets;
+            for (var i = 0; i < syncTargets.Length; i++)
+            {
+                if (syncTargets[i].CapturesNativeLogs)
+                {
+                    DeliverLog(syncTargets[i], entry, stacktrace);
+                }
+            }
+
+            if (data.AsyncTargets.Length > 0)
+            {
+                data.Dispatcher.Enqueue(new LogRecord(in entry, stacktrace, nativeBroadcast: true));
+            }
         }
 
         internal static void DispatchException(Exception exception, Object context)
@@ -134,6 +147,7 @@ namespace Appegy.UniLogger
 
             for (var i = 0; i < targets.Length; i++)
             {
+                if (record.NativeBroadcast && !targets[i].CapturesNativeLogs) continue;
                 DeliverLog(targets[i], record.Entry, record.StackTrace);
             }
         }
