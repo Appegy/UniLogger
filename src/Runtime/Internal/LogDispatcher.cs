@@ -24,7 +24,7 @@ namespace Appegy.UniLogger
 
         public void Enqueue(in LogRecord record)
         {
-            if (_completed || _data.Targets.Length == 0) return;
+            if (_completed) return;
             try
             {
                 _queue.Add(record);
