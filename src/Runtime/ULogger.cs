@@ -74,11 +74,18 @@ namespace Appegy.UniLogger
                 return;
             }
 
-            var exceptions = new List<Exception>();
-            FlattenForLog(exception, exceptions);
-            for (var i = 0; i < exceptions.Count; i++)
+            var exceptions = ExceptionListPool.Get();
+            try
             {
-                DispatchSingleException(data, exceptions[i], context);
+                FlattenForLog(exception, exceptions);
+                for (var i = 0; i < exceptions.Count; i++)
+                {
+                    DispatchSingleException(data, exceptions[i], context);
+                }
+            }
+            finally
+            {
+                ExceptionListPool.Return(exceptions);
             }
         }
 
@@ -86,19 +93,31 @@ namespace Appegy.UniLogger
         {
             if (exception is AggregateException aggregate)
             {
-                var inner = aggregate.Flatten().InnerExceptions;
-                if (inner.Count == 0)
+                var before = output.Count;
+                CollectInnerExceptions(aggregate, output);
+                if (output.Count == before)
                 {
                     output.Add(aggregate);
-                    return;
-                }
-                for (var i = 0; i < inner.Count; i++)
-                {
-                    output.Add(inner[i]);
                 }
                 return;
             }
             output.Add(exception);
+        }
+
+        private static void CollectInnerExceptions(AggregateException aggregate, List<Exception> output)
+        {
+            var inner = aggregate.InnerExceptions;
+            for (var i = 0; i < inner.Count; i++)
+            {
+                if (inner[i] is AggregateException nested)
+                {
+                    CollectInnerExceptions(nested, output);
+                }
+                else
+                {
+                    output.Add(inner[i]);
+                }
+            }
         }
 
         private static void DispatchSingleException(ULoggerData data, Exception exception, Object context)
