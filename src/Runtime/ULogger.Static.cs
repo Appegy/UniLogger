@@ -147,16 +147,6 @@ namespace Appegy.UniLogger
             DispatchException(e.Exception, null);
         }
 
-        internal static Exception UnwrapException(Exception exception)
-        {
-            if (exception is AggregateException aggregate)
-            {
-                var inner = aggregate.Flatten().InnerExceptions;
-                if (inner.Count == 1) return inner[0];
-            }
-            return exception;
-        }
-
         #region GetLogger
 
         public static ULogger GetLogger<TLoggerTag>(TLoggerTag tag)

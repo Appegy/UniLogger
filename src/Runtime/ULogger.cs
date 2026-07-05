@@ -74,7 +74,35 @@ namespace Appegy.UniLogger
                 return;
             }
 
-            exception = UnwrapException(exception);
+            var exceptions = new List<Exception>();
+            FlattenForLog(exception, exceptions);
+            for (var i = 0; i < exceptions.Count; i++)
+            {
+                DispatchSingleException(data, exceptions[i], context);
+            }
+        }
+
+        internal static void FlattenForLog(Exception exception, List<Exception> output)
+        {
+            if (exception is AggregateException aggregate)
+            {
+                var inner = aggregate.Flatten().InnerExceptions;
+                if (inner.Count == 0)
+                {
+                    output.Add(aggregate);
+                    return;
+                }
+                for (var i = 0; i < inner.Count; i++)
+                {
+                    output.Add(inner[i]);
+                }
+                return;
+            }
+            output.Add(exception);
+        }
+
+        private static void DispatchSingleException(ULoggerData data, Exception exception, Object context)
+        {
             var message = UnityExceptionFormatter.Format(exception);
             var entry = new LogEntry(null, LogLevel.Error, message, default, context, DateTime.Now, Thread.CurrentThread.ManagedThreadId);
 
@@ -87,7 +115,6 @@ namespace Appegy.UniLogger
                 }
                 catch
                 {
-                    // swallow
                 }
             }
 
