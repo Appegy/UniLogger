@@ -104,11 +104,6 @@ namespace Appegy.UniLogger
             };
             Data.Dispatcher = new LogDispatcher(Data);
             Debug.unityLogger.logHandler = Data.LogHandler;
-            
-            Application.logMessageReceivedThreaded -= OnLogMessageReceivedThreaded;
-            TaskScheduler.UnobservedTaskException -= OnUnobservedTaskException;
-            Application.quitting -= Terminate;
-            
             Application.logMessageReceivedThreaded += OnLogMessageReceivedThreaded;
             TaskScheduler.UnobservedTaskException += OnUnobservedTaskException;
             Application.quitting += Terminate;

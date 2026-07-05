@@ -187,32 +187,22 @@ are dropped there. This is expected.
 
 ## 6. Recursion guard and the native feedback loop
 
-In a **player** build there is no editor console to draw into, so `UnityTarget` delivers every log by
-forwarding it to Unity's original `Debug` handler (`ForwardNatively`, and the raw-exception forward
-for exceptions). In the editor this only happens if the console reflection is unavailable; the normal
-editor path writes to the console directly and never touches native.
+**Problem.** UniLogger listens to `Application.logMessageReceivedThreaded` to catch engine and native
+logs, which never pass through our handler. In a player, though, `UnityTarget` writes our own logs to
+that native handler, so they raise the same event and would be logged a second time.
 
-That native write makes Unity fire `Application.logMessageReceivedThreaded`. UniLogger listens to
-that event on purpose: it is how engine and native logs (which never pass through our handler) reach
-the async targets. But it also means a log we just forwarded would come straight back and be
-delivered to the async targets a second time.
-
-`_suppressNativeCapture` (a `[ThreadStatic]` flag) tells the two apart. UniLogger sets it around the
-forward, so when the event fires for our own log the listener skips it; an event with the flag unset
-is a genuine engine/native log and is captured.
+**Solution.** UniLogger sets a `[ThreadStatic]` flag around the forward. When the event fires for our
+own log the flag is set, so the listener skips it. A log without the flag is a real engine/native log
+and is kept.
 
 ```mermaid
 flowchart TD
-    F["UnityTarget forwards a log to native<br/>(player, or editor if reflection is down)"] --> B["set _suppressNativeCapture = true"]
-    B --> N["native Debug handler writes the log"]
+    F["UnityTarget forwards our log to native<br/>(flag set around the call)"] --> N["native handler writes it"]
     N --> EV["logMessageReceivedThreaded fires"]
     EV --> CH{"flag set?"}
-    CH -->|"yes"| IGN["ignored - our own log, no double delivery"]
-    CH -->|"no"| CAP2["captured - a real engine/native log"]
-    N --> E["clear the flag (finally)"]
+    CH -->|"yes"| IGN["skip - our own log"]
+    CH -->|"no"| CAP["capture - real engine/native log"]
 ```
 
-The guard exists only because two useful behaviors overlap: forwarding to native (so player logs
-reach logcat/stdout) and listening to native (so engine logs reach the file). The event carries no
-identity, so the flag marks our own forwards. It is set and cleared in a `try/finally`, so it never
-stays stuck, and it is `[ThreadStatic]`, so it cannot leak between threads.
+The flag is set and cleared in a `try/finally`, so it never stays stuck, and being `[ThreadStatic]`
+it does not leak between threads.
