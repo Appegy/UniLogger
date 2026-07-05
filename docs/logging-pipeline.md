@@ -148,36 +148,25 @@ flowchart TD
 
 ## 5. Stack-trace handling
 
-Two parts shape a stack. Which one runs depends on the path.
-
-Normal logs:
-
-```mermaid
-flowchart LR
-    N1["extract current stack<br/>(already Unity format)"] --> N2["remove noise frames"]
-```
-
-Exceptions:
+Two parts shape a stack, and both paths end by removing noise frames. Which parts run depends on the
+path.
 
 ```mermaid
-flowchart LR
-    E1["Exception.StackTrace (Mono)"] --> E2["convert to Unity format,<br/>make path relative"] --> E3["remove noise frames"]
+flowchart TD
+    L["normal log"] --> N1["extract current stack<br/>(already Unity format)"]
+    E["exception"] --> E1["Exception.StackTrace (Mono)"]
+    E1 --> E2["convert to Unity format,<br/>make path relative"]
+    N1 --> CLEAN["remove noise frames"]
+    E2 --> CLEAN
 ```
 
 ### Noise filtering (`RemoveNoiseFrames`)
 
-It removes stack lines that start with a known prefix, matched at a frame boundary
-(`. : ( space / +`). Prefixes are grouped so filters are easy to add or remove:
-
-| Group | Removes frames from |
-| --- | --- |
-| UniLogger internals | `ULogger`, `ExtendedULogger`, `UnityTarget`, `UnityConsoleBridge`, `UnityExceptionFormatter`, `LogDispatcher` |
-| Unity logging | `UnityEngine.StackTraceUtility`, `Debug`, `Logger`, `UnityLogger` |
-| Assertions | `UnityEngine.Assertions` |
-| Async machinery | `AsyncMethodBuilderCore`, `System.Threading`, `UnitySynchronizationContext` |
-
-The boundary check avoids false hits: a user type like `Appegy.UniLogger.ULoggerFoo` is kept,
-because the character after `ULogger` (`F`) is not a boundary.
+This drops stack lines that only add noise, so the stack shows user code. It removes UniLogger's own
+frames, Unity's logging frames, assertion frames, and async/thread machinery. Matching is by
+fully-qualified prefix at a frame boundary, so a user type that only starts with the same text (for
+example `Appegy.UniLogger.ULoggerFoo`) is kept. The exact prefix list lives in
+[`StackTraceCleaner`](../src/Runtime/Internal/UnityInterop/StackTraceCleaner.cs).
 
 ### Mono to Unity conversion (exceptions only)
 
