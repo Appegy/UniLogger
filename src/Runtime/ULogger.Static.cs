@@ -35,9 +35,10 @@ namespace Appegy.UniLogger
         private static readonly Func<string, ULogger> _loggerFactory = tag => new ULogger(tag);
 #endif
 
-        private static readonly ULogger _unsortedLogger = ULogger.GetLogger(Tags.Unsorted);
+        private static readonly ULogger _unsortedLogger = GetLogger(Tags.Unsorted);
 
-        [ThreadStatic] private static bool _suppressNativeCapture;
+        [ThreadStatic] 
+        private static bool _suppressNativeCapture;
 
         [CanBeNull]
         private static ULoggerData Data { get; set; }
@@ -103,9 +104,14 @@ namespace Appegy.UniLogger
             };
             Data.Dispatcher = new LogDispatcher(Data);
             Debug.unityLogger.logHandler = Data.LogHandler;
+            
+            Application.logMessageReceivedThreaded -= OnLogMessageReceivedThreaded;
+            TaskScheduler.UnobservedTaskException -= OnUnobservedTaskException;
+            Application.quitting -= Terminate;
+            
             Application.logMessageReceivedThreaded += OnLogMessageReceivedThreaded;
-            Application.quitting += Terminate;
             TaskScheduler.UnobservedTaskException += OnUnobservedTaskException;
+            Application.quitting += Terminate;
         }
 
         public static void Terminate()
@@ -114,8 +120,8 @@ namespace Appegy.UniLogger
             if (Data == null) return;
             Debug.unityLogger.logHandler = Data.OriginalHandler;
             Application.logMessageReceivedThreaded -= OnLogMessageReceivedThreaded;
-            Application.quitting -= Terminate;
             TaskScheduler.UnobservedTaskException -= OnUnobservedTaskException;
+            Application.quitting -= Terminate;
 
             Data.Dispatcher.Dispose();
             foreach (var target in Data.Targets)
