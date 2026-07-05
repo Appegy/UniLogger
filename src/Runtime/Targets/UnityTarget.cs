@@ -20,10 +20,15 @@ namespace Appegy.UniLogger
         {
             if (ThreadDispatcher.IsMainThread)
             {
-                if (UnityConsoleBridge.TryLog(entry.LogLevel, entry.String, stackTrace, entry.Context)) return;
+                if (UnityConsoleBridge.TryLog(entry.LogLevel, entry.String, stackTrace, entry.Context))
+                {
+                    NativeLogEventBridge.Raise(entry.LogLevel.ConvertToLogType(), entry.String, stackTrace, true);
+                    return;
+                }
             }
             else if (UnityConsoleBridge.TryEnqueueForMainThread(entry.LogLevel, entry.String, stackTrace, entry.Context))
             {
+                NativeLogEventBridge.Raise(entry.LogLevel.ConvertToLogType(), entry.String, stackTrace, false);
                 return;
             }
 
@@ -35,10 +40,15 @@ namespace Appegy.UniLogger
         {
             if (ThreadDispatcher.IsMainThread)
             {
-                if (UnityConsoleBridge.TryLog(LogLevel.Error, entry.String, null, entry.Context)) return;
+                if (UnityConsoleBridge.TryLog(LogLevel.Error, entry.String, null, entry.Context))
+                {
+                    NativeLogEventBridge.Raise(LogType.Exception, entry.String, null, true);
+                    return;
+                }
             }
             else if (UnityConsoleBridge.TryEnqueueForMainThread(LogLevel.Error, entry.String, null, entry.Context))
             {
+                NativeLogEventBridge.Raise(LogType.Exception, entry.String, null, false);
                 return;
             }
 
