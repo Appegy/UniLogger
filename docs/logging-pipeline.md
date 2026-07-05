@@ -94,19 +94,27 @@ Key points:
 
 ## 3. Exceptions: `DispatchException`
 
-Exceptions take their own path. UniLogger unwraps them, formats them once (type, message, clean
-stack), and calls `target.LogException` directly. This path skips the per-target filter and
-formatter, because an exception has no tags and is already a full text block.
+Exceptions take their own path. If the exception is an `AggregateException`, UniLogger flattens it
+and logs **each inner exception as its own entry**, so each one keeps its real type, message, and
+throw-site stack. A non-aggregate is logged as one entry. Each entry is formatted once (type,
+message, clean stack) and sent straight to `target.LogException`. This path skips the per-target
+filter and formatter, because an exception has no tags and is already a full text block.
 
 ```mermaid
 flowchart TD
     IN["ULogger.LogException"] --> NULLCHK{"Initialized?"}
     NULLCHK -->|"no"| FB["forward to Debug.unityLogger"]
-    NULLCHK -->|"yes"| UNWRAP["unwrap single AggregateException"]
-    UNWRAP --> FORMAT["format once: type, message, clean stack"]
+    NULLCHK -->|"yes"| AGG{"AggregateException?"}
+    AGG -->|"yes"| SPLIT["flatten, take each inner exception"]
+    AGG -->|"no"| ONE["one exception"]
+    SPLIT --> EACH["for each exception"]
+    ONE --> EACH
+    EACH --> FORMAT["format once: type, message, clean stack"]
     FORMAT --> SYNC["sync targets: LogException"]
     FORMAT --> ASYNC["async targets: queue"]
 ```
+
+So a `Task.WhenAll` that fails with three exceptions becomes three log entries, not one.
 
 For the stack, UniLogger uses `Exception.StackTrace` when it is set (Mono format, which it converts),
 or the current stack otherwise. Both go through the noise filter. See
