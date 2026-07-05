@@ -87,9 +87,8 @@ namespace Appegy.UniLogger
         {
             if (exception is AggregateException aggregate)
             {
-                var before = output.Count;
                 CollectInnerExceptions(aggregate, output);
-                if (output.Count == before)
+                if (output.Count == 0)
                 {
                     output.Add(aggregate);
                 }
