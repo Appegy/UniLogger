@@ -28,6 +28,8 @@ namespace Appegy.UniLogger
         private static readonly string[] _asyncMachineryFrames =
         {
             "System.Runtime.CompilerServices.AsyncMethodBuilderCore",
+            "System.Runtime.CompilerServices.AsyncTaskMethodBuilder",
+            "System.Runtime.CompilerServices.MoveNextRunner",
             "System.Threading",
             "UnityEngine.UnitySynchronizationContext",
         };
@@ -90,7 +92,7 @@ namespace Appegy.UniLogger
 
         private static bool IsFrameBoundary(char c)
         {
-            return c is '.' or ':' or '(' or ' ' or '/' or '+';
+            return c is '.' or ':' or '(' or ' ' or '/' or '+' or '`';
         }
     }
 }
