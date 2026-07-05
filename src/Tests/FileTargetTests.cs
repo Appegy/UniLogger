@@ -12,6 +12,13 @@ namespace Appegy.UniLogger
             return new LogEntry(null, LogLevel.Log, message, default, null);
         }
 
+        private static string ReadAll(string path)
+        {
+            using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            using var reader = new StreamReader(stream);
+            return reader.ReadToEnd();
+        }
+
         private string _directory;
 
         [SetUp]
@@ -41,7 +48,7 @@ namespace Appegy.UniLogger
             target.Log(E("hello"), null);
             target.Flush();
 
-            File.ReadAllText(target.CurrentFilePath).Should().Be("hello\n");
+            ReadAll(target.CurrentFilePath).Should().Be("hello\n");
         }
 
         [Test]
@@ -52,7 +59,7 @@ namespace Appegy.UniLogger
             target.Log(E("msg"), "trace");
             target.Flush();
 
-            File.ReadAllText(target.CurrentFilePath).Should().Be("msg\ntrace\n");
+            ReadAll(target.CurrentFilePath).Should().Be("msg\ntrace\n");
         }
 
         [Test]
@@ -63,7 +70,7 @@ namespace Appegy.UniLogger
             target.LogException(new InvalidOperationException("ignored"), E("formatted exception text"));
             target.Flush();
 
-            File.ReadAllText(target.CurrentFilePath).Should().Contain("formatted exception text");
+            ReadAll(target.CurrentFilePath).Should().Contain("formatted exception text");
         }
 
         [Test]
