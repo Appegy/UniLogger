@@ -8,9 +8,9 @@ moment it reaches a target (`Log` or `LogException`). Every box in the diagrams 
 ## Table of contents
 
 1. [Big picture](#1-big-picture)
-2. [The core: `SendLog`](#2-the-core-sendlog)
-3. [Sync vs async and the writer thread](#3-sync-vs-async-and-the-writer-thread)
-4. [Exceptions](#4-exceptions)
+2. [Logs: `SendLog`](#2-logs-sendlog)
+3. [Exceptions: `DispatchException`](#3-exceptions-dispatchexception)
+4. [Sync vs async and the writer thread](#4-sync-vs-async-and-the-writer-thread)
 5. [Stack-trace handling](#5-stack-trace-handling)
 6. [Recursion guard and the native feedback loop](#6-recursion-guard-and-the-native-feedback-loop)
 
@@ -59,7 +59,7 @@ and sent to the targets that accept native logs. Some targets opt out of these (
 
 ---
 
-## 2. The core: `SendLog`
+## 2. Logs: `SendLog`
 
 `SendLog` is the main path for normal logs.
 
@@ -92,7 +92,29 @@ Key points:
 
 ---
 
-## 3. Sync vs async and the writer thread
+## 3. Exceptions: `DispatchException`
+
+Exceptions take their own path. UniLogger unwraps them, formats them once (type, message, clean
+stack), and calls `target.LogException` directly. This path skips the per-target filter and
+formatter, because an exception has no tags and is already a full text block.
+
+```mermaid
+flowchart TD
+    IN["ULogger.LogException"] --> NULLCHK{"Initialized?"}
+    NULLCHK -->|"no"| FB["forward to Debug.unityLogger"]
+    NULLCHK -->|"yes"| UNWRAP["unwrap single AggregateException"]
+    UNWRAP --> FORMAT["format once: type, message, clean stack"]
+    FORMAT --> SYNC["sync targets: LogException"]
+    FORMAT --> ASYNC["async targets: queue"]
+```
+
+For the stack, UniLogger uses `Exception.StackTrace` when it is set (Mono format, which it converts),
+or the current stack otherwise. Both go through the noise filter. See
+[Stack-trace handling](#5-stack-trace-handling).
+
+---
+
+## 4. Sync vs async and the writer thread
 
 A target is either sync or async (`RunSynchronously`). Sync targets get the log right away, on the
 thread that logged it. Async targets go to a queue. One background thread, `UniLogger.Writer`, reads
@@ -113,28 +135,6 @@ flowchart TD
   batch. This is fast and avoids a flush per line.
 - On shutdown the queue closes, the thread writes what is left and flushes one last time, so nothing
   in the queue is lost.
-
----
-
-## 4. Exceptions
-
-Exceptions take their own path. UniLogger unwraps them, formats them once (type, message, clean
-stack), and calls `target.LogException` directly. This path skips the per-target filter and
-formatter, because an exception has no tags and is already a full text block.
-
-```mermaid
-flowchart TD
-    IN["ULogger.LogException"] --> NULLCHK{"Initialized?"}
-    NULLCHK -->|"no"| FB["forward to Debug.unityLogger"]
-    NULLCHK -->|"yes"| UNWRAP["unwrap single AggregateException"]
-    UNWRAP --> FORMAT["format once: type, message, clean stack"]
-    FORMAT --> SYNC["sync targets: LogException"]
-    FORMAT --> ASYNC["async targets: queue"]
-```
-
-For the stack, UniLogger uses `Exception.StackTrace` when it is set (Mono format, which it converts),
-or the current stack otherwise. Both go through the noise filter. See
-[Stack-trace handling](#5-stack-trace-handling).
 
 ---
 
