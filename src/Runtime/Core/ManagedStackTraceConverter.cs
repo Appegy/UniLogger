@@ -5,7 +5,7 @@ namespace Appegy.UniLogger
 {
     internal static class ManagedStackTraceConverter
     {
-        private static readonly Regex _monoFrame = new Regex(
+        private static readonly Regex _monoFrame = new(
             @"^\s*at\s+(?<method>.+?)\s*(?:\[0x[0-9a-fA-F]+\]\s*in\s+(?<file>.+):(?<line>\d+))?\s*$",
             RegexOptions.Compiled);
 

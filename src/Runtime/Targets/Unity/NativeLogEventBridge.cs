@@ -1,3 +1,4 @@
+#if UNITY_EDITOR
 using System;
 using System.Reflection;
 using UnityEngine;
@@ -8,30 +9,22 @@ namespace Appegy.UniLogger
     {
         private const BindingFlags StaticFlags = BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
 
-        [ThreadStatic]
-        private static bool _raising;
-
         private static bool _reflectionReady;
         private static Action<string, string, LogType, bool> _callLogCallback;
 
         public static void Raise(LogType type, string message, string stackTrace, bool onMainThread)
         {
-            if (_raising) return;
+            if (ReentrancyCounter.IsEntered) return;
             if (!EnsureReflection()) return;
 
-            _raising = true;
-            ULogger.BeginSuppressNativeCapture();
+            using var _ = ReentrancyCounter.Enter();
             try
             {
                 _callLogCallback(message, stackTrace ?? string.Empty, type, onMainThread);
             }
             catch
             {
-            }
-            finally
-            {
-                ULogger.EndSuppressNativeCapture();
-                _raising = false;
+                // swallow
             }
         }
 
@@ -60,3 +53,4 @@ namespace Appegy.UniLogger
         }
     }
 }
+#endif

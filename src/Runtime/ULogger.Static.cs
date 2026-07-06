@@ -20,7 +20,6 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using JetBrains.Annotations;
 using UnityEngine;
 
@@ -37,23 +36,11 @@ namespace Appegy.UniLogger
 
         private static readonly ULogger _unsortedLogger = GetLogger(Tags.Unsorted);
 
-        [ThreadStatic] 
-        private static bool _suppressNativeCapture;
-
         [CanBeNull]
         private static ULoggerData Data { get; set; }
 
-        internal static ILogHandler OriginalHandler => Data?.OriginalHandler;
-
-        internal static void BeginSuppressNativeCapture()
-        {
-            _suppressNativeCapture = true;
-        }
-
-        internal static void EndSuppressNativeCapture()
-        {
-            _suppressNativeCapture = false;
-        }
+        [CanBeNull]
+        internal static ILogHandler OriginalHandler { get; set; }
 
         public static IEnumerable<Target> GetTargets()
         {
@@ -86,60 +73,6 @@ namespace Appegy.UniLogger
             {
                 throw new InvalidOperationException($"A target of type '{target.GetType().Name}' is already registered.");
             }
-        }
-
-        public static void Initialize()
-        {
-            ThreadDispatcher.EnsureMainThread(nameof(Initialize));
-            if (Data != null)
-            {
-                Terminate();
-            }
-            var originalHandler = Debug.unityLogger.logHandler;
-            ManagedStackTraceConverter.SetProjectRoot(Application.dataPath);
-            Data = new ULoggerData
-            {
-                OriginalHandler = originalHandler,
-                LogHandler = new UnityLogger(),
-            };
-            Data.Dispatcher = new LogDispatcher(Data);
-            Debug.unityLogger.logHandler = Data.LogHandler;
-            Application.logMessageReceivedThreaded += OnLogMessageReceivedThreaded;
-            TaskScheduler.UnobservedTaskException += OnUnobservedTaskException;
-            Application.quitting += Terminate;
-        }
-
-        public static void Terminate()
-        {
-            ThreadDispatcher.EnsureMainThread(nameof(Terminate));
-            if (Data == null) return;
-            Debug.unityLogger.logHandler = Data.OriginalHandler;
-            Application.logMessageReceivedThreaded -= OnLogMessageReceivedThreaded;
-            TaskScheduler.UnobservedTaskException -= OnUnobservedTaskException;
-            Application.quitting -= Terminate;
-
-            Data.Dispatcher.Dispose();
-            foreach (var target in Data.Targets)
-            {
-                if (target is IDisposable disposable)
-                {
-                    disposable.Dispose();
-                }
-            }
-            Data = null;
-        }
-
-        private static void OnLogMessageReceivedThreaded(string condition, string stacktrace, LogType type)
-        {
-            if (type == LogType.Exception) return;
-            if (_suppressNativeCapture) return;
-            _unsortedLogger.BroadcastUnobservedLog(condition, stacktrace, type);
-        }
-
-        [HideInCallstack]
-        private static void OnUnobservedTaskException(object sender, UnobservedTaskExceptionEventArgs e)
-        {
-            DispatchException(e.Exception, null);
         }
 
         #region GetLogger

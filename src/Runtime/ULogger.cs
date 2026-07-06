@@ -115,7 +115,7 @@ namespace Appegy.UniLogger
 
         private static void DispatchSingleException(ULoggerData data, Exception exception, Object context)
         {
-            var message = UnityExceptionFormatter.Format(exception);
+            var message = ExceptionFormatter.Format(exception);
             var entry = new LogEntry(null, LogLevel.Error, message, default, context, DateTime.Now, Thread.CurrentThread.ManagedThreadId);
 
             var syncTargets = data.SyncTargets;

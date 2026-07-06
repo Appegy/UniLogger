@@ -80,6 +80,7 @@ namespace Appegy.UniLogger
                 }
                 catch
                 {
+                    // swallow
                 }
             }
         }

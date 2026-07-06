@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Appegy.UniLogger
 {
-    internal static class UnityExceptionFormatter
+    internal static class ExceptionFormatter
     {
         public static string Format(Exception exception)
         {

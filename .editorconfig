@@ -1,13 +1,16 @@
+root=true
+
 [*]
 charset=utf-8
 end_of_line=lf
 trim_trailing_whitespace=false
-insert_final_newline=false
+insert_final_newline=true
 indent_style=space
 indent_size=4
 
 # Microsoft .NET properties
 csharp_new_line_before_members_in_object_initializers=false
+csharp_preprocessor_indent_directives=false
 csharp_preferred_modifier_order=public, private, protected, internal, new, abstract, virtual, sealed, override, static, readonly, extern, unsafe, volatile, async:suggestion
 csharp_prefer_braces=true:none
 csharp_style_var_elsewhere=true:suggestion
@@ -69,8 +72,8 @@ resharper_indent_nested_for_stmt=true
 resharper_indent_nested_lock_stmt=true
 resharper_indent_nested_usings_stmt=true
 resharper_indent_nested_while_stmt=true
-resharper_indent_preprocessor_directives=normal
-resharper_indent_preprocessor_if=usual_indent
+resharper_indent_preprocessor_directives=no_indent
+resharper_indent_preprocessor_if=no_indent
 resharper_keep_existing_attribute_arrangement=true
 resharper_max_attribute_length_for_same_line=80
 resharper_outdent_binary_ops=true

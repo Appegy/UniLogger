@@ -1,3 +1,4 @@
+#if UNITY_EDITOR
 using System;
 using System.Collections.Concurrent;
 using System.Linq;
@@ -18,9 +19,9 @@ namespace Appegy.UniLogger
         private const BindingFlags StaticFlags = BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
         private const BindingFlags InstanceFlags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
 
-        private static readonly Regex _frameWithLocation = new Regex(@"\(at (Assets[^:)\n]+):(\d+)\)", RegexOptions.Compiled);
+        private static readonly Regex _frameWithLocation = new(@"\(at (Assets[^:)\n]+):(\d+)\)", RegexOptions.Compiled);
 
-        private static readonly ConcurrentQueue<PendingWrite> _pending = new ConcurrentQueue<PendingWrite>();
+        private static readonly ConcurrentQueue<PendingWrite> _pending = new();
 
         private static bool _reflectionReady;
         private static bool _reflectionAvailable;
@@ -199,3 +200,4 @@ namespace Appegy.UniLogger
         }
     }
 }
+#endif

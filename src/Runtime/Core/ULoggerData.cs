@@ -1,5 +1,4 @@
 using System;
-using UnityEngine;
 
 namespace Appegy.UniLogger
 {
@@ -13,8 +12,6 @@ namespace Appegy.UniLogger
         public Target[] SyncTargets => _syncTargets;
         public Target[] AsyncTargets => _asyncTargets;
 
-        public ILogHandler OriginalHandler { get; init; }
-        public UnityLogger LogHandler { get; init; }
         public LogDispatcher Dispatcher { get; set; }
 
         public bool AddTarget(Target target)
