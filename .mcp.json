@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "UnityMCP": {
+      "command": "uvx",
+      "args": [
+        "--from",
+        "mcpforunityserver==10.0.0",
+        "mcp-for-unity"
+      ],
+      "env": {
+        "UNITY_MCP_DEFAULT_INSTANCE": "Appegy.UniLogger.Lab"
+      }
+    }
+  }
+}
