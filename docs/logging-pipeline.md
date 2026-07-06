@@ -215,3 +215,6 @@ flowchart TD
 The counter is entered and released via a `using` scope (`ReentrancyCounter.Scope.Dispose`), so it
 never stays stuck, and being `ThreadLocal` it does not leak between threads. The same guard also stops
 `NativeLogEventBridge` from re-entering itself.
+
+The editor console mirror, the native re-raise, and the double-click handler all reach Unity
+internals by reflection. How that works is covered in [`editor-reflection.md`](editor-reflection.md).
