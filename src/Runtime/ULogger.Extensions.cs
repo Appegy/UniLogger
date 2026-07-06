@@ -22,7 +22,7 @@ using Object = UnityEngine.Object;
 
 namespace Appegy.UniLogger
 {
-    public static class ExtendedULogger
+    public static class ULoggerExtensions
     {
         #region Trace
 

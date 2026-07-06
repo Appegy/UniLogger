@@ -5,10 +5,10 @@ namespace Appegy.UniLogger
         private static readonly string[] _uniLoggerFrames =
         {
             "Appegy.UniLogger.ULogger",
-            "Appegy.UniLogger.ExtendedULogger",
+            "Appegy.UniLogger.ULoggerExtensions",
             "Appegy.UniLogger.UnityTarget",
             "Appegy.UniLogger.UnityConsoleBridge",
-            "Appegy.UniLogger.UnityExceptionFormatter",
+            "Appegy.UniLogger.ExceptionFormatter",
             "Appegy.UniLogger.LogDispatcher",
         };
 

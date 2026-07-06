@@ -11,7 +11,7 @@ namespace Appegy.UniLogger
             var stack =
                 "UnityEngine.StackTraceUtility:ExtractStackTrace ()\n" +
                 "Appegy.UniLogger.ULogger:SendLog (Appegy.UniLogger.LogLevel,string)\n" +
-                "Appegy.UniLogger.ExtendedULogger:Log (Appegy.UniLogger.ULogger,string)\n" +
+                "Appegy.UniLogger.ULoggerExtensions:Log (Appegy.UniLogger.ULogger,string)\n" +
                 "MyGame.Player:Start () (at Assets/Player.cs:10)";
 
             var cleaned = StackTraceCleaner.RemoveNoiseFrames(stack);
