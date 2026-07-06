@@ -8,6 +8,7 @@ namespace Appegy.UniLogger
         private static void Install()
         {
             UnityConsoleBridge.EnsureDoubleClickHandlerRegistered();
+            NativeLogEventBridge.Warmup();
             EditorApplication.update -= UnityConsoleBridge.DrainPending;
             EditorApplication.update += UnityConsoleBridge.DrainPending;
         }

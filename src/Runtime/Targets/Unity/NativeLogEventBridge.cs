@@ -12,6 +12,11 @@ namespace Appegy.UniLogger
         private static bool _reflectionReady;
         private static Action<string, string, LogType, bool> _callLogCallback;
 
+        public static void Warmup()
+        {
+            EnsureReflection();
+        }
+
         public static void Raise(LogType type, string message, string stackTrace, bool onMainThread)
         {
             if (ReentrancyCounter.IsEntered) return;

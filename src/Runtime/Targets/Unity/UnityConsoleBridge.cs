@@ -19,7 +19,7 @@ namespace Appegy.UniLogger
         private const BindingFlags StaticFlags = BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
         private const BindingFlags InstanceFlags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
 
-        private static readonly Regex _frameWithLocation = new(@"\(at (Assets[^:)\n]+):(\d+)\)", RegexOptions.Compiled);
+        private static readonly Regex _frameWithLocation = new(@"\(at ([^\n]+):(\d+)\)", RegexOptions.Compiled);
 
         private static readonly ConcurrentQueue<PendingWrite> _pending = new();
 
