@@ -166,7 +166,7 @@ This drops stack lines that only add noise, so the stack shows user code. It rem
 frames, Unity's logging frames, assertion frames, and async/thread machinery. Matching is by
 fully-qualified prefix at a frame boundary, so a user type that only starts with the same text (for
 example `Appegy.UniLogger.ULoggerFoo`) is kept. The exact prefix list lives in
-[`StackTraceCleaner`](../src/Runtime/Internal/UnityInterop/StackTraceCleaner.cs).
+[`StackTraceCleaner`](../src/Runtime/Core/StackTraceCleaner.cs).
 
 ### Mono to Unity conversion (exceptions only)
 
@@ -188,21 +188,30 @@ are dropped there. This is expected.
 ## 6. Recursion guard and the native feedback loop
 
 **Problem.** UniLogger listens to `Application.logMessageReceivedThreaded` to catch engine and native
-logs, which never pass through our handler. In a player, though, `UnityTarget` writes our own logs to
-that native handler, so they raise the same event and would be logged a second time.
+logs, which never pass through our handler. But `UnityTarget` itself writes our own logs back to Unity,
+so they raise the same event and would be logged a second time. There are two ways this happens:
 
-**Solution.** UniLogger sets a `[ThreadStatic]` flag around the forward. When the event fires for our
-own log the flag is set, so the listener skips it. A log without the flag is a real engine/native log
-and is kept.
+- In a player (or when the editor console bridge can't take the line), `UnityTarget` forwards to the
+  original log handler (`ForwardNatively` / `ForwardExceptionNatively`).
+- In the editor, after writing to the Unity console through `UnityConsoleBridge`, `UnityTarget` also
+  re-raises the native log event (`NativeLogEventBridge`, which invokes `Application.CallLogCallback`
+  by reflection) so other `logMessageReceivedThreaded` subscribers still see our logs.
+
+Both paths feed back into our own listener.
+
+**Solution.** UniLogger wraps each of these writes in a `ReentrancyCounter.Enter()` scope. The counter
+is a `ThreadLocal<int>` depth; `OnNativeLogReceived` skips the event whenever the counter is entered on
+that thread. A log that arrives with the counter at zero is a real engine/native log and is kept.
 
 ```mermaid
 flowchart TD
-    F["UnityTarget forwards our log to native<br/>(flag set around the call)"] --> N["native handler writes it"]
+    F["UnityTarget writes our log to Unity<br/>(forward to handler, or editor mirror)<br/>ReentrancyCounter.Enter()"] --> N["Unity writes / raises the log"]
     N --> EV["logMessageReceivedThreaded fires"]
-    EV --> CH{"flag set?"}
+    EV --> CH{"counter entered on this thread?"}
     CH -->|"yes"| IGN["skip - our own log"]
     CH -->|"no"| CAP["capture - real engine/native log"]
 ```
 
-The flag is set and cleared in a `try/finally`, so it never stays stuck, and being `[ThreadStatic]`
-it does not leak between threads.
+The counter is entered and released via a `using` scope (`ReentrancyCounter.Scope.Dispose`), so it
+never stays stuck, and being `ThreadLocal` it does not leak between threads. The same guard also stops
+`NativeLogEventBridge` from re-entering itself.
