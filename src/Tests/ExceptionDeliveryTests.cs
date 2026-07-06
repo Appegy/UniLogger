@@ -17,16 +17,22 @@ namespace Appegy.UniLogger
             {
             }
 
-            protected internal override void Log(string message, string stackTrace)
+            protected internal override void Log(in LogEntry entry, string stackTrace)
             {
-                LastMessage = message;
+                LastMessage = entry.String;
             }
 
-            protected internal override void LogException(Exception exception, string message)
+            protected internal override void LogException(Exception exception, in LogEntry entry)
             {
                 LastException = exception;
-                LastExceptionMessage = message;
+                LastExceptionMessage = entry.String;
             }
+        }
+
+        private static LogRecord ExceptionRecord(Exception exception, string message)
+        {
+            var entry = new LogEntry(null, LogLevel.Error, message, default, null);
+            return new LogRecord(exception, in entry);
         }
 
         [Test]
@@ -37,7 +43,7 @@ namespace Appegy.UniLogger
             data.AddTarget(target);
 
             var exception = new InvalidOperationException("boom");
-            ULogger.Deliver(data, new LogRecord(exception, "formatted text"));
+            ULogger.Deliver(data, ExceptionRecord(exception, "formatted text"));
 
             target.LastException.Should().BeSameAs(exception);
             target.LastExceptionMessage.Should().Be("formatted text");
@@ -51,7 +57,7 @@ namespace Appegy.UniLogger
             data.AddTarget(target);
 
             var exception = new InvalidOperationException("boom");
-            ULogger.Deliver(data, new LogRecord(exception, "formatted text"));
+            ULogger.Deliver(data, ExceptionRecord(exception, "formatted text"));
 
             target.LastException.Should().BeSameAs(exception);
         }
@@ -63,7 +69,7 @@ namespace Appegy.UniLogger
             var target = new RecordingTarget();
             data.AddTarget(target);
 
-            ULogger.Deliver(data, new LogRecord(new Exception("boom"), "formatted text"));
+            ULogger.Deliver(data, ExceptionRecord(new Exception("boom"), "formatted text"));
 
             target.LastMessage.Should().BeNull();
         }

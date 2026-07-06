@@ -49,10 +49,11 @@ namespace Appegy.UniLogger
 
         public string CurrentFilePath { get; private set; }
 
-        protected internal override void Log(string message, string stackTrace)
+        protected internal override void Log(in LogEntry entry, string stackTrace)
         {
             if (_disposed || _writer == null) return;
 
+            var message = entry.String;
             var hasStack = !string.IsNullOrEmpty(stackTrace);
             var bytes = _encoding.GetByteCount(message) + 1;
             if (hasStack) bytes += _encoding.GetByteCount(stackTrace) + 1;
@@ -76,13 +77,12 @@ namespace Appegy.UniLogger
             }
             catch
             {
-                // never throw from logging
             }
         }
 
-        protected internal override void LogException(Exception exception, string message)
+        protected internal override void LogException(Exception exception, in LogEntry entry)
         {
-            Log(message, null);
+            Log(in entry, null);
         }
 
         protected internal override void Flush()
@@ -94,7 +94,6 @@ namespace Appegy.UniLogger
             }
             catch
             {
-                // never throw from logging
             }
         }
 
@@ -154,7 +153,6 @@ namespace Appegy.UniLogger
             }
             catch
             {
-                // never throw from logging
             }
             _writer = null;
         }
@@ -183,7 +181,6 @@ namespace Appegy.UniLogger
                 }
                 catch
                 {
-                    // a locked or already removed file must not break logging
                 }
             }
         }
@@ -207,9 +204,9 @@ namespace Appegy.UniLogger
             var prefix = _baseName + SequenceSeparator;
             if (!fileName.StartsWith(prefix, StringComparison.Ordinal)) return -1;
             var withoutExtension = _extension.Length > 0 && fileName.EndsWith(_extension, StringComparison.Ordinal)
-                ? fileName.Substring(0, fileName.Length - _extension.Length)
+                ? fileName[..^_extension.Length]
                 : fileName;
-            var digits = withoutExtension.Substring(prefix.Length);
+            var digits = withoutExtension[prefix.Length..];
             return int.TryParse(digits, NumberStyles.None, CultureInfo.InvariantCulture, out var sequence) ? sequence : -1;
         }
 

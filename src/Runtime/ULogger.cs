@@ -22,76 +22,132 @@ namespace Appegy.UniLogger
         }
 
         [HideInCallstack]
-        internal void SendLogToUnity(LogLevel logLevel, string message, Color color, Object context)
+        internal void SendLog(LogLevel logLevel, string message, Color color, Object context)
         {
-            if (Data == null)
+            var data = Data;
+            if (data == null)
             {
                 Debug.unityLogger.Log(logLevel.ConvertToLogType(), (object)message, context);
                 return;
             }
 
-            var logTime = DateTime.Now;
-            var threadId = Thread.CurrentThread.ManagedThreadId;
+            var entry = new LogEntry(_tags, logLevel, message, color, context, DateTime.Now, Thread.CurrentThread.ManagedThreadId);
+            var stackTrace = NeedsStackTrace(data, logLevel, _tags) ? CaptureStackTrace() : null;
 
-            // means it is possible to send log to Unity, catch using Application.logMessageReceivedThreaded and broadcast to other targets
-            if (WillBeAllowedByFilterer(Data.UnityTarget.Filterer, logLevel, _tags))
+            DeliverToSyncTargets(data, in entry, stackTrace);
+
+            if (data.AsyncTargets.Length > 0)
             {
-                var line = new LogEntry(FilterTags(_tags, Data.UnityTarget.Filterer, logLevel), logLevel, message, color, context, logTime, threadId);
-                var formattedMessage = Data.UnityTarget.Formatter.Format(line);
-
-                // manually extract stack trace if stack it disabled by unity (or we are in separate thread) but some target needs it
-                var manualStacktrace = string.Empty;
-                if (!ThreadDispatcher.IsMainThread ||
-                    Application.GetStackTraceLogType(logLevel.ConvertToLogType()) == StackTraceLogType.None &&
-                    AnyTargetNeedsStacktrace(logLevel))
-                {
-                    manualStacktrace = StackTraceUtility.ExtractStackTrace();
-                }
-
-                _pending = new PendingBroadcast
-                {
-                    Data = Data,
-                    Tags = _tags,
-                    LogLevel = logLevel,
-                    Message = message,
-                    ManualStacktrace = manualStacktrace,
-                    Color = color,
-                    Context = context,
-                    LogTime = logTime,
-                    ThreadId = threadId,
-                };
-                Data.LogHandler.Default.Log(logLevel.ConvertToLogType(), (object)formattedMessage, context);
-                _pending = null;
+                data.Dispatcher.Enqueue(new LogRecord(in entry, stackTrace));
             }
-            // means that this log should not be sent to Unity, but can be sent to other targets
-            else
+        }
+
+        internal void BroadcastUnobservedLog(string message, string stacktrace, LogType type)
+        {
+            var data = Data;
+            if (data == null) return;
+            var logLevel = type.ConvertToLogLevel();
+            var entry = new LogEntry(_tags, logLevel, message, default, default, DateTime.Now, Thread.CurrentThread.ManagedThreadId);
+
+            var syncTargets = data.SyncTargets;
+            for (var i = 0; i < syncTargets.Length; i++)
             {
-                var manualStacktrace = string.Empty;
-                var allowedByAnyFilterer = false;
-                foreach (var target in Data.Targets)
+                if (syncTargets[i].CapturesNativeLogs)
                 {
-                    if (!WillBeAllowedByFilterer(target.Filterer, logLevel, _tags))
-                    {
-                        continue;
-                    }
-                    allowedByAnyFilterer = true;
-                    if (string.IsNullOrEmpty(manualStacktrace) && target.GetStackTraceEnabled(logLevel))
-                    {
-                        manualStacktrace = StackTraceUtility.ExtractStackTrace();
-                    }
+                    DeliverLog(syncTargets[i], entry, stacktrace);
                 }
-                if (allowedByAnyFilterer)
+            }
+
+            if (data.AsyncTargets.Length > 0)
+            {
+                data.Dispatcher.Enqueue(new LogRecord(in entry, stacktrace, nativeBroadcast: true));
+            }
+        }
+
+        internal static void DispatchException(Exception exception, Object context)
+        {
+            if (exception == null) return;
+            var data = Data;
+            if (data == null)
+            {
+                Debug.unityLogger.logHandler.LogException(exception, context);
+                return;
+            }
+
+            var exceptions = ExceptionListPool.Get();
+            FlattenForLog(exception, exceptions);
+            for (var i = 0; i < exceptions.Count; i++)
+            {
+                DispatchSingleException(data, exceptions[i], context);
+            }
+            ExceptionListPool.Return(exceptions);
+        }
+
+        internal static void FlattenForLog(Exception exception, List<Exception> output)
+        {
+            if (exception is AggregateException aggregate)
+            {
+                CollectInnerExceptions(aggregate, output);
+                if (output.Count == 0)
                 {
-                    Data.Dispatcher.Enqueue(new LogRecord(_tags, logLevel, message, manualStacktrace, color, context, logTime, threadId));
+                    output.Add(aggregate);
+                }
+                return;
+            }
+            output.Add(exception);
+        }
+
+        private static void CollectInnerExceptions(AggregateException aggregate, List<Exception> output)
+        {
+            var pending = new Stack<AggregateException>();
+            pending.Push(aggregate);
+            while (pending.Count > 0)
+            {
+                var inner = pending.Pop().InnerExceptions;
+                for (var i = 0; i < inner.Count; i++)
+                {
+                    if (inner[i] is AggregateException nested)
+                    {
+                        pending.Push(nested);
+                    }
+                    else
+                    {
+                        output.Add(inner[i]);
+                    }
                 }
             }
         }
 
-        private bool AnyTargetNeedsStacktrace(LogLevel logLevel)
+        private static void DispatchSingleException(ULoggerData data, Exception exception, Object context)
         {
-            foreach (var target in Data.Targets)
+            var message = ExceptionFormatter.Format(exception);
+            var entry = new LogEntry(Array.Empty<string>(), LogLevel.Error, message, default, context, DateTime.Now, Thread.CurrentThread.ManagedThreadId);
+
+            var syncTargets = data.SyncTargets;
+            for (var i = 0; i < syncTargets.Length; i++)
             {
-                if (WillBeAllowedByFilterer(target.Filterer, logLevel, _tags) && target.GetStackTraceEnabled(logLevel))
+                try
+                {
+                    syncTargets[i].LogException(exception, entry);
+                }
+                catch
+                {
+                }
+            }
+
+            if (data.AsyncTargets.Length > 0)
+            {
+                data.Dispatcher.Enqueue(new LogRecord(exception, in entry));
+            }
+        }
+
+        private static bool NeedsStackTrace(ULoggerData data, LogLevel logLevel, IReadOnlyList<string> tags)
+        {
+            var targets = data.Targets;
+            for (var i = 0; i < targets.Length; i++)
+            {
+                var target = targets[i];
+                if (target.GetStackTraceEnabled(logLevel) && WillBeAllowedByFilterer(target.Filterer, logLevel, tags))
                 {
                     return true;
                 }
@@ -99,48 +155,66 @@ namespace Appegy.UniLogger
             return false;
         }
 
-        internal void BroadcastUnobservedLog(string message, string stacktrace, LogType type)
+        private static string CaptureStackTrace()
         {
-            if (Data == null) return;
-            var logLevel = type.ConvertToLogLevel();
-            Data.Dispatcher.Enqueue(new LogRecord(_tags, logLevel, message, stacktrace, default, default, DateTime.Now, Thread.CurrentThread.ManagedThreadId));
+            return StackTraceCleaner.RemoveNoiseFrames(StackTraceUtility.ExtractStackTrace());
+        }
+
+        [HideInCallstack]
+        private static void DeliverToSyncTargets(ULoggerData data, in LogEntry entry, string stackTrace)
+        {
+            var targets = data.SyncTargets;
+            for (var i = 0; i < targets.Length; i++)
+            {
+                DeliverLog(targets[i], entry, stackTrace);
+            }
         }
 
         internal static void Deliver(ULoggerData data, in LogRecord record)
         {
+            var targets = data.AsyncTargets;
             if (record.Exception != null)
             {
-                foreach (var target in data.Targets)
+                for (var i = 0; i < targets.Length; i++)
                 {
                     try
                     {
-                        target.LogException(record.Exception, record.Message);
+                        targets[i].LogException(record.Exception, record.Entry);
                     }
                     catch
                     {
-                        // just don't fail on log
+                        // swallow
                     }
                 }
                 return;
             }
 
-            foreach (var target in data.Targets)
+            for (var i = 0; i < targets.Length; i++)
             {
-                if (!WillBeAllowedByFilterer(target.Filterer, record.LogLevel, record.Tags))
-                {
-                    continue;
-                }
-                try
-                {
-                    var line = new LogEntry(FilterTags(record.Tags, target.Filterer, record.LogLevel), record.LogLevel, record.Message, record.Color, record.Context, record.LogTime, record.ThreadId);
-                    var formattedMessage = target.Formatter.Format(line);
-                    var targetStackTrace = target.GetStackTraceEnabled(record.LogLevel) ? record.StackTrace : null;
-                    target.Log(formattedMessage, targetStackTrace);
-                }
-                catch
-                {
-                    // just don't fail on log
-                }
+                if (record.NativeBroadcast && !targets[i].CapturesNativeLogs) continue;
+                DeliverLog(targets[i], record.Entry, record.StackTrace);
+            }
+        }
+
+        [HideInCallstack]
+        internal static void DeliverLog(Target target, in LogEntry entry, string stackTrace)
+        {
+            if (!WillBeAllowedByFilterer(target.Filterer, entry.LogLevel, entry.Tags))
+            {
+                return;
+            }
+            try
+            {
+                var tags = FilterTags(entry.Tags, target.Filterer, entry.LogLevel);
+                var raw = ReferenceEquals(tags, entry.Tags) ? entry : entry.WithTags(tags);
+                var formatted = target.Formatter.Format(raw);
+                var outEntry = raw.WithMessage(formatted);
+                var stackTraceForTarget = target.GetStackTraceEnabled(entry.LogLevel) ? stackTrace : null;
+                target.Log(in outEntry, stackTraceForTarget);
+            }
+            catch
+            {
+                // swallow
             }
         }
 

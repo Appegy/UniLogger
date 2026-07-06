@@ -35,5 +35,15 @@ namespace Appegy.UniLogger
             ThreadId = threadId;
             IsColored = color != default;
         }
+
+        internal LogEntry WithTags(IReadOnlyList<string> tags)
+        {
+            return new LogEntry(tags, LogLevel, String, Color, Context, LogTime, ThreadId);
+        }
+
+        internal LogEntry WithMessage(string message)
+        {
+            return new LogEntry(Tags, LogLevel, message, Color, Context, LogTime, ThreadId);
+        }
     }
 }

@@ -18,11 +18,11 @@ namespace Appegy.UniLogger
             _buffer = new char[capacity];
         }
 
-        protected internal override void Log(string message, string stackTrace)
+        protected internal override void Log(in LogEntry entry, string stackTrace)
         {
             lock (_gate)
             {
-                Append(message);
+                Append(entry.String);
                 if (!string.IsNullOrEmpty(stackTrace))
                 {
                     Append("\n");
@@ -32,9 +32,9 @@ namespace Appegy.UniLogger
             }
         }
 
-        protected internal override void LogException(Exception exception, string message)
+        protected internal override void LogException(Exception exception, in LogEntry entry)
         {
-            Log(message, null);
+            Log(in entry, null);
         }
 
         public string GetContent()

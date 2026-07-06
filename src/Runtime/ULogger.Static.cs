@@ -20,7 +20,6 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using JetBrains.Annotations;
 using UnityEngine;
 
@@ -35,43 +34,26 @@ namespace Appegy.UniLogger
         private static readonly Func<string, ULogger> _loggerFactory = tag => new ULogger(tag);
 #endif
 
-        private static readonly ULogger _unsortedLogger = ULogger.GetLogger(Tags.Unsorted);
-
-        [ThreadStatic] private static PendingBroadcast? _pending;
-
-        private struct PendingBroadcast
-        {
-            public ULoggerData Data;
-            public IReadOnlyList<string> Tags;
-            public LogLevel LogLevel;
-            public string Message;
-            public string ManualStacktrace;
-            public Color Color;
-            public UnityEngine.Object Context;
-            public DateTime LogTime;
-            public int ThreadId;
-        }
+        private static readonly ULogger _unsortedLogger = GetLogger(Tags.Unsorted);
 
         [CanBeNull]
         private static ULoggerData Data { get; set; }
 
-        public static IEnumerable<TargetBase> GetTargets()
+        [CanBeNull]
+        internal static ILogHandler OriginalHandler { get; set; }
+
+        public static IEnumerable<Target> GetTargets()
         {
             if (Data == null) yield break;
-            yield return Data.UnityTarget;
             foreach (var target in Data.Targets)
             {
                 yield return target;
             }
         }
 
-        public static T GetTarget<T>() where T : TargetBase
+        public static T GetTarget<T>() where T : Target
         {
             if (Data == null) return null;
-            if (Data.UnityTarget is T unityTarget)
-            {
-                return unityTarget;
-            }
             foreach (var target in Data.Targets)
             {
                 if (target is T match)
@@ -91,91 +73,6 @@ namespace Appegy.UniLogger
             {
                 throw new InvalidOperationException($"A target of type '{target.GetType().Name}' is already registered.");
             }
-        }
-
-        public static void Initialize(Formatter unityFormatter = null, Filterer unityFilterer = null)
-        {
-            ThreadDispatcher.EnsureMainThread(nameof(Initialize));
-            if (Data != null)
-            {
-                Terminate();
-            }
-            unityFormatter ??= new Formatter();
-            unityFilterer ??= new Filterer(true);
-            var unityTarget = new UnityTarget(unityFormatter, unityFilterer);
-            Data = new ULoggerData
-            {
-                UnityTarget = unityTarget,
-                LogHandler = new UnityLogger(Debug.unityLogger.logHandler),
-            };
-            Data.Dispatcher = new LogDispatcher(Data);
-            Debug.unityLogger.logHandler = Data.LogHandler;
-            Application.logMessageReceivedThreaded += OnLogMessageReceivedThreaded;
-            Application.quitting += Terminate;
-            TaskScheduler.UnobservedTaskException += OnUnobservedTaskException;
-        }
-
-        public static void Terminate()
-        {
-            ThreadDispatcher.EnsureMainThread(nameof(Terminate));
-            if (Data == null) return;
-            Debug.unityLogger.logHandler = Data.LogHandler.Default;
-            Application.logMessageReceivedThreaded -= OnLogMessageReceivedThreaded;
-            Application.quitting -= Terminate;
-            TaskScheduler.UnobservedTaskException -= OnUnobservedTaskException;
-
-            Data.Dispatcher.Dispose();
-            foreach (var target in Data.Targets)
-            {
-                if (target is IDisposable disposable)
-                {
-                    disposable.Dispose();
-                }
-            }
-            Data = null;
-        }
-
-        private static void OnLogMessageReceivedThreaded(string condition, string stacktrace, LogType type)
-        {
-            if (type == LogType.Exception) return;
-            if (_pending.HasValue)
-            {
-                var pending = _pending.Value;
-                if (string.IsNullOrEmpty(stacktrace))
-                {
-                    stacktrace = pending.ManualStacktrace;
-                }
-                pending.Data.Dispatcher.Enqueue(new LogRecord(pending.Tags, pending.LogLevel, pending.Message, stacktrace, pending.Color, pending.Context, pending.LogTime, pending.ThreadId));
-            }
-            else
-            {
-                _unsortedLogger.BroadcastUnobservedLog(condition, stacktrace, type);
-            }
-        }
-
-        [HideInCallstack]
-        private static void OnUnobservedTaskException(object sender, UnobservedTaskExceptionEventArgs e)
-        {
-            LogException(e.Exception.InnerException ?? e.Exception);
-        }
-
-        internal static void EnqueueException(Exception exception)
-        {
-            var data = Data;
-            if (data == null || data.Targets.Length == 0 || exception == null) return;
-            exception = UnwrapAggregate(exception);
-            var message = UnityExceptionFormatter.Format(exception);
-            data.Dispatcher.Enqueue(new LogRecord(exception, message));
-        }
-
-        private static Exception UnwrapAggregate(Exception exception)
-        {
-            if (exception is AggregateException aggregate)
-            {
-                var inner = aggregate.Flatten().InnerExceptions;
-                if (inner.Count == 1) return inner[0];
-            }
-            return exception;
         }
 
         #region GetLogger

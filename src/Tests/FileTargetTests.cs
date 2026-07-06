@@ -7,6 +7,18 @@ namespace Appegy.UniLogger
 {
     public class FileTargetTests
     {
+        private static LogEntry E(string message)
+        {
+            return new LogEntry(null, LogLevel.Log, message, default, null);
+        }
+
+        private static string ReadAll(string path)
+        {
+            using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            using var reader = new StreamReader(stream);
+            return reader.ReadToEnd();
+        }
+
         private string _directory;
 
         [SetUp]
@@ -25,7 +37,6 @@ namespace Appegy.UniLogger
             }
             catch
             {
-                // best effort cleanup
             }
         }
 
@@ -34,10 +45,10 @@ namespace Appegy.UniLogger
         {
             using var target = new FileTarget(Path.Combine(_directory, "game.log"));
 
-            target.Log("hello", null);
+            target.Log(E("hello"), null);
             target.Flush();
 
-            File.ReadAllText(target.CurrentFilePath).Should().Be("hello\n");
+            ReadAll(target.CurrentFilePath).Should().Be("hello\n");
         }
 
         [Test]
@@ -45,10 +56,10 @@ namespace Appegy.UniLogger
         {
             using var target = new FileTarget(Path.Combine(_directory, "game.log"));
 
-            target.Log("msg", "trace");
+            target.Log(E("msg"), "trace");
             target.Flush();
 
-            File.ReadAllText(target.CurrentFilePath).Should().Be("msg\ntrace\n");
+            ReadAll(target.CurrentFilePath).Should().Be("msg\ntrace\n");
         }
 
         [Test]
@@ -56,10 +67,10 @@ namespace Appegy.UniLogger
         {
             using var target = new FileTarget(Path.Combine(_directory, "game.log"));
 
-            target.LogException(new InvalidOperationException("ignored"), "formatted exception text");
+            target.LogException(new InvalidOperationException("ignored"), E("formatted exception text"));
             target.Flush();
 
-            File.ReadAllText(target.CurrentFilePath).Should().Contain("formatted exception text");
+            ReadAll(target.CurrentFilePath).Should().Contain("formatted exception text");
         }
 
         [Test]
@@ -67,8 +78,8 @@ namespace Appegy.UniLogger
         {
             using var target = new FileTarget(Path.Combine(_directory, "game.log"), fileSizeLimitBytes: 16);
 
-            target.Log("0123456789", null);
-            target.Log("0123456789", null);
+            target.Log(E("0123456789"), null);
+            target.Log(E("0123456789"), null);
             target.Flush();
 
             target.GetLogFiles().Length.Should().Be(2);
@@ -81,7 +92,7 @@ namespace Appegy.UniLogger
 
             for (var i = 0; i < 5; i++)
             {
-                target.Log("12345", null);
+                target.Log(E("12345"), null);
             }
             target.Flush();
 

@@ -5,12 +5,17 @@ namespace Appegy.UniLogger
 {
     public class InMemoryTargetTests
     {
+        private static LogEntry E(string message)
+        {
+            return new LogEntry(null, LogLevel.Log, message, default, null);
+        }
+
         [Test]
         public void WhenContentFitsCapacity_ThanGetContentReturnsAllText()
         {
             var target = new InMemoryTarget(32);
 
-            target.Log("hello", null);
+            target.Log(E("hello"), null);
 
             target.GetContent().Should().Be("hello\n");
         }
@@ -20,7 +25,7 @@ namespace Appegy.UniLogger
         {
             var target = new InMemoryTarget(64);
 
-            target.Log("msg", "trace");
+            target.Log(E("msg"), "trace");
 
             target.GetContent().Should().Be("msg\ntrace\n");
         }
@@ -30,8 +35,8 @@ namespace Appegy.UniLogger
         {
             var target = new InMemoryTarget(8);
 
-            target.Log("hello", null);
-            target.Log("world", null);
+            target.Log(E("hello"), null);
+            target.Log(E("world"), null);
 
             target.GetContent().Should().Be("o\nworld\n");
         }
@@ -41,7 +46,7 @@ namespace Appegy.UniLogger
         {
             var target = new InMemoryTarget(4);
 
-            target.Log("abcdefg", null);
+            target.Log(E("abcdefg"), null);
 
             target.GetContent().Should().Be("efg\n");
         }
@@ -51,7 +56,7 @@ namespace Appegy.UniLogger
         {
             var target = new InMemoryTarget(256);
 
-            target.LogException(new System.InvalidOperationException("ignored"), "formatted exception text");
+            target.LogException(new System.InvalidOperationException("ignored"), E("formatted exception text"));
 
             target.GetContent().Should().Contain("formatted exception text");
         }
@@ -61,7 +66,7 @@ namespace Appegy.UniLogger
         {
             var target = new InMemoryTarget(16);
 
-            target.Log("data", null);
+            target.Log(E("data"), null);
             target.Clear();
 
             target.GetContent().Should().Be(string.Empty);

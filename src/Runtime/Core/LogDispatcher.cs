@@ -24,14 +24,13 @@ namespace Appegy.UniLogger
 
         public void Enqueue(in LogRecord record)
         {
-            if (_completed || _data.Targets.Length == 0) return;
+            if (_completed) return;
             try
             {
                 _queue.Add(record);
             }
             catch (InvalidOperationException)
             {
-                // adding completed concurrently with terminate
             }
         }
 
@@ -81,7 +80,7 @@ namespace Appegy.UniLogger
                 }
                 catch
                 {
-                    // never fail the writer loop on a target flush
+                    // swallow
                 }
             }
         }
