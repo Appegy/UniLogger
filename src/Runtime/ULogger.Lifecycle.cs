@@ -31,15 +31,12 @@ namespace Appegy.UniLogger
             ThreadDispatcher.EnsureMainThread(nameof(Terminate));
             if (Data == null) return;
 
+            Debug.unityLogger.logHandler = OriginalHandler;
+            OriginalHandler = null;
+
             Application.logMessageReceivedThreaded -= OnNativeLogReceived;
             TaskScheduler.UnobservedTaskException -= OnUnobservedTaskException;
             Application.quitting -= Terminate;
-
-            if (OriginalHandler != null)
-            {
-                Debug.unityLogger.logHandler = OriginalHandler;
-                OriginalHandler = null;
-            }
 
             Data.Dispatcher.Dispose();
             foreach (var target in Data.Targets)
