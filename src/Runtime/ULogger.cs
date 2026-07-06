@@ -99,16 +99,21 @@ namespace Appegy.UniLogger
 
         private static void CollectInnerExceptions(AggregateException aggregate, List<Exception> output)
         {
-            var inner = aggregate.InnerExceptions;
-            for (var i = 0; i < inner.Count; i++)
+            var pending = new Stack<AggregateException>();
+            pending.Push(aggregate);
+            while (pending.Count > 0)
             {
-                if (inner[i] is AggregateException nested)
+                var inner = pending.Pop().InnerExceptions;
+                for (var i = 0; i < inner.Count; i++)
                 {
-                    CollectInnerExceptions(nested, output);
-                }
-                else
-                {
-                    output.Add(inner[i]);
+                    if (inner[i] is AggregateException nested)
+                    {
+                        pending.Push(nested);
+                    }
+                    else
+                    {
+                        output.Add(inner[i]);
+                    }
                 }
             }
         }
@@ -116,7 +121,7 @@ namespace Appegy.UniLogger
         private static void DispatchSingleException(ULoggerData data, Exception exception, Object context)
         {
             var message = ExceptionFormatter.Format(exception);
-            var entry = new LogEntry(null, LogLevel.Error, message, default, context, DateTime.Now, Thread.CurrentThread.ManagedThreadId);
+            var entry = new LogEntry(Array.Empty<string>(), LogLevel.Error, message, default, context, DateTime.Now, Thread.CurrentThread.ManagedThreadId);
 
             var syncTargets = data.SyncTargets;
             for (var i = 0; i < syncTargets.Length; i++)

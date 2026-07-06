@@ -25,8 +25,8 @@ namespace Appegy.UniLogger
             var updated = new Target[current.Length + 1];
             Array.Copy(current, updated, current.Length);
             updated[current.Length] = target;
-            _targets = updated;
             RebuildPartitions(updated);
+            _targets = updated;
             return true;
         }
 
