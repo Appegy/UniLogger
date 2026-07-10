@@ -31,6 +31,10 @@ namespace Appegy.UniLogger
             _snapshot = new Snapshot(logTypeEnabled, new HashSet<string>());
         }
 
+        public static Filterer AllowAllTags() => new(true);
+
+        public static Filterer BlockAllTags() => new(false);
+
         /// <summary>
         /// Returns true when <see cref="logLevel"/> and <see cref="tag"/> are not filtered and allowed to show
         /// </summary>

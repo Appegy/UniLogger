@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
 
@@ -8,22 +9,64 @@ namespace Appegy.UniLogger
     {
         public static void Initialize()
         {
-            ThreadDispatcher.EnsureMainThread(nameof(Initialize));
+            Configure(_ => { });
+        }
+
+        public static void Configure(Action<LoggerConfiguration> configure)
+        {
+            if (configure == null) throw new ArgumentNullException(nameof(configure));
+            ThreadDispatcher.EnsureMainThread(nameof(Configure));
+
+            var data = BuildData(configure);
+
             if (Data != null)
             {
                 Terminate();
             }
 
-            Data = new ULoggerData();
-            Data.Dispatcher = new LogDispatcher(Data);
-
             OriginalHandler = Debug.unityLogger.logHandler;
             ManagedStackTraceConverter.SetProjectRoot(Application.dataPath);
+            Data = data;
             Debug.unityLogger.logHandler = new UnityLogger();
 
             Application.logMessageReceivedThreaded += OnNativeLogReceived;
             TaskScheduler.UnobservedTaskException += OnUnobservedTaskException;
             Application.quitting += Terminate;
+        }
+
+        private static ULoggerData BuildData(Action<LoggerConfiguration> configure)
+        {
+            var configuration = new LoggerConfiguration();
+            var data = new ULoggerData();
+            try
+            {
+                configure(configuration);
+                foreach (var target in configuration.BuildTargets())
+                {
+                    if (!data.AddTarget(target))
+                    {
+                        throw new InvalidOperationException($"A target of type '{target.GetType().Name}' is already registered.");
+                    }
+                }
+            }
+            catch
+            {
+                DisposeTargets(configuration.BuildTargets());
+                throw;
+            }
+            data.Dispatcher = new LogDispatcher(data);
+            return data;
+        }
+
+        private static void DisposeTargets(IReadOnlyList<Target> targets)
+        {
+            foreach (var target in targets)
+            {
+                if (target is IDisposable disposable)
+                {
+                    disposable.Dispose();
+                }
+            }
         }
 
         public static void Terminate()
@@ -39,13 +82,7 @@ namespace Appegy.UniLogger
             Application.quitting -= Terminate;
 
             Data.Dispatcher.Dispose();
-            foreach (var target in Data.Targets)
-            {
-                if (target is IDisposable disposable)
-                {
-                    disposable.Dispose();
-                }
-            }
+            DisposeTargets(Data.Targets);
             Data = null;
         }
 
