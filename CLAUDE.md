@@ -21,3 +21,7 @@ Use whatever Unity MCP the session exposes (Unity Assistant, Copilot bridge, etc
 At start: read the console once to confirm MCP is connected. If not, tell the user once, keep trying each change.
 
 **Zero-warnings policy**: keep zero compiler warnings; fix all, introduced and pre-existing. The Unity console misses some C# nullable warnings; for nullable work, also check Rider or `dotnet build`.
+
+## Docs
+
+A doc in `docs/` explains how a mechanism works and why it is built that way, which the code alone does not show. It never narrates the code (which method sets which field, what is wrapped in what). A diagram shows real flow and decisions, such as the editor and player split or a marker gate, never a chain of calls. `docs/logging-pipeline.md` sets the tone: dense B1-B2 technical English, mermaid where the flow matters, no filler.
